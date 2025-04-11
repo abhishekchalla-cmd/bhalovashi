@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "media",
+  "info": {
+    "singularName": "medium",
+    "pluralName": "media",
+    "displayName": "Media"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "blocks"
+    },
+    "media": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "project": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::project.project"
+    }
+  }
+}
