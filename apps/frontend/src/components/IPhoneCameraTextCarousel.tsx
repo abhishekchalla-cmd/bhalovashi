@@ -1,0 +1,146 @@
+import { alteDIN } from "@/fonts";
+import { useState, useEffect, useRef, useMemo } from "react";
+
+interface IPhoneCameraTextCarouselProps {
+  items: string[];
+  onSelect: (index: number) => void;
+  initialIndex?: number;
+}
+
+export default function IPhoneCameraTextCarousel({
+  items,
+  onSelect,
+  initialIndex = 0,
+}: IPhoneCameraTextCarouselProps) {
+  const carouselItemSpace = 8;
+
+  const [selectedIndex, setSelectedIndex] = useState(initialIndex);
+  const [touchStart, setTouchStart] = useState(0);
+  const [currentX, setCurrentX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const carouselItems = useRef<HTMLDivElement[]>([]);
+
+  const carouselXTranslate = useMemo(() => {
+    const elapsedWidth = carouselItems.current
+      .filter((_, index) => index < selectedIndex)
+      .reduce(
+        (acc, item) => acc + item.offsetWidth + carouselItemSpace * 14 * 0.25,
+        0
+      );
+    const currentItemWidth = carouselItems.current.length
+      ? carouselItems.current[selectedIndex].offsetWidth
+      : 0;
+
+    const xResult = window.innerWidth / 2 - elapsedWidth - currentItemWidth / 2;
+
+    if (isDragging) return xResult + currentX;
+    return xResult;
+  }, [selectedIndex, isDragging, currentX]);
+
+  const { index: carouselItemInCrossHairIndex } = useMemo(() => {
+    if (isDragging) {
+      const carouselElapsedWidth = window.innerWidth / 2 - carouselXTranslate;
+      const result = carouselItems.current.reduce(
+        (acc, cur, idx) => {
+          const itemThreshold = cur.offsetWidth * 0.3 + acc.elapsedX;
+          if (itemThreshold <= carouselElapsedWidth) {
+            acc.index = idx;
+          }
+          acc.elapsedX += cur.offsetWidth + carouselItemSpace * 14 * 0.25;
+          return acc;
+        },
+        {
+          elapsedX: 0,
+          index: 0,
+        }
+      );
+      return result;
+    } else {
+      return {
+        elapsedX: 0,
+        index: selectedIndex,
+      };
+    }
+  }, [carouselXTranslate, isDragging, selectedIndex]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+    setCurrentX(0);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+
+    const touchX = e.targetTouches[0].clientX;
+    const diff = touchX - touchStart;
+    setCurrentX(diff);
+  };
+
+  const handleTouchEnd = () => {
+    setSelectedIndex(carouselItemInCrossHairIndex);
+    setIsDragging(false);
+    setCurrentX(0);
+  };
+
+  useEffect(() => {
+    onSelect(selectedIndex);
+  }, [selectedIndex, onSelect]);
+
+  // const getItemStyle = (index: number) => {
+  //   const baseStyle = {
+  //     transform: `translateX(${currentX}px)`,
+  //     transition: isDragging ? "none" : "transform 0.3s ease",
+  //   };
+
+  //   return baseStyle;
+  // };
+
+  return (
+    <div
+      className="relative w-full py-2 overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div
+        className={`w-full flex space-x-${carouselItemSpace} ${isDragging ? "" : "transition-all duration-300"}`}
+        style={{
+          transform: `translateX(${carouselXTranslate}px)`,
+        }}
+      >
+        {items.map((item, index) => (
+          <div
+            key={index}
+            className={`${alteDIN.className} text-sm h-5 flex items-center justify-center uppercase text-center transition-all duration-300 ${
+              index ===
+              (isDragging ? carouselItemInCrossHairIndex : selectedIndex)
+                ? "text-yellow-300 font-medium"
+                : "text-gray-400"
+            }`}
+            ref={(el) => {
+              if (el) {
+                carouselItems.current[index] = el;
+              }
+            }}
+            onClick={() => setSelectedIndex(index)}
+          >
+            {item}
+          </div>
+        ))}
+      </div>
+      <div
+        style={{
+          pointerEvents: "none",
+          backgroundImage:
+            "linear-gradient(to right, #000, transparent, transparent, transparent, #000)",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "100%",
+        }}
+      ></div>
+    </div>
+  );
+}
