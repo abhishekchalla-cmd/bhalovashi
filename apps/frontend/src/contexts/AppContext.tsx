@@ -1,15 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 type AppContextType = {
   isEntered: boolean;
-  setIsEntered: (isEntered: boolean) => void;
+  enter: () => void;
 };
 
 export const AppContext = createContext<AppContextType>({
   isEntered: false,
-  setIsEntered: () => {},
+  enter: () => {},
 });
 
 export default function AppContextProvider(props: {
@@ -18,8 +18,33 @@ export default function AppContextProvider(props: {
   const { children } = props;
   const [isEntered, setIsEntered] = useState(false);
 
+  useEffect(() => {
+    // Function to update the viewport height
+    const updateViewportHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    // Initial update
+    updateViewportHeight();
+
+    // Add event listeners
+    window.addEventListener("resize", updateViewportHeight);
+    window.addEventListener("orientationchange", updateViewportHeight);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", updateViewportHeight);
+      window.removeEventListener("orientationchange", updateViewportHeight);
+    };
+  }, []);
+
+  const enter = async () => {
+    setIsEntered(true);
+  };
+
   return (
-    <AppContext.Provider value={{ isEntered, setIsEntered }}>
+    <AppContext.Provider value={{ isEntered, enter }}>
       {children}
     </AppContext.Provider>
   );

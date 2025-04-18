@@ -5,12 +5,14 @@ interface IPhoneCameraTextCarouselProps {
   items: string[];
   onSelect: (index: number) => void;
   initialIndex?: number;
+  overlayClassName?: string;
 }
 
 export default function IPhoneCameraTextCarousel({
   items,
   onSelect,
   initialIndex = 0,
+  overlayClassName,
 }: IPhoneCameraTextCarouselProps) {
   const carouselItemSpace = 8;
 
@@ -87,18 +89,9 @@ export default function IPhoneCameraTextCarousel({
     onSelect(selectedIndex);
   }, [selectedIndex, onSelect]);
 
-  // const getItemStyle = (index: number) => {
-  //   const baseStyle = {
-  //     transform: `translateX(${currentX}px)`,
-  //     transition: isDragging ? "none" : "transform 0.3s ease",
-  //   };
-
-  //   return baseStyle;
-  // };
-
   return (
     <div
-      className="relative w-full py-2 overflow-hidden"
+      className={`relative w-full py-2 overflow-hidden`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -112,7 +105,7 @@ export default function IPhoneCameraTextCarousel({
         {items.map((item, index) => (
           <div
             key={index}
-            className={`${alteDIN.className} text-sm h-5 flex items-center justify-center uppercase text-center transition-all duration-300 ${
+            className={`${alteDIN.className} h-5 flex items-center justify-center uppercase text-center transition-all duration-300 ${
               index ===
               (isDragging ? carouselItemInCrossHairIndex : selectedIndex)
                 ? "text-yellow-300 font-medium"
@@ -140,6 +133,7 @@ export default function IPhoneCameraTextCarousel({
           right: 0,
           height: "100%",
         }}
+        className={overlayClassName}
       ></div>
     </div>
   );
