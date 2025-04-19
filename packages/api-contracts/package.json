@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "@bhalovashi/types": "*",
     "axios": "^1.8.4",
-    "zod": "^3.23.8"
+    "zod": "^3.24.3"
   }
 }
