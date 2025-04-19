@@ -20,7 +20,7 @@ export default function RootLayout({
           className={`${alteDIN.variable} antialiased`}
           style={{ touchAction: "none" }}
         >
-          <div id="phantom-container" className="space-x-8 hidden" />
+          <div id="phantom-container" className="space-x-8 h-20 h-40 hidden" />
           {children}
         </body>
       </html>

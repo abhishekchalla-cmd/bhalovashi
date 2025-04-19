@@ -454,7 +454,10 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
     model: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
-    thumbnail: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    thumbnail_media: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::medium.medium'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

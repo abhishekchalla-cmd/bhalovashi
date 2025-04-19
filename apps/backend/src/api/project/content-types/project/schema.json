@@ -29,16 +29,10 @@
         "audios"
       ]
     },
-    "thumbnail": {
-      "type": "media",
-      "multiple": false,
-      "required": false,
-      "allowedTypes": [
-        "images",
-        "files",
-        "videos",
-        "audios"
-      ]
+    "thumbnail_media": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::medium.medium"
     }
   }
 }

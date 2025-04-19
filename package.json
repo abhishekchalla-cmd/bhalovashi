@@ -7,6 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "workspaces": [
-    "apps/*"
-  ]
+    "apps/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "sharp": "0.32.1"
+  }
 }
