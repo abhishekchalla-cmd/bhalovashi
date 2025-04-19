@@ -1,3 +1,5 @@
+"use client";
+
 import { alteDIN } from "@/fonts";
 import { useState, useEffect, useRef, useMemo } from "react";
 
@@ -22,7 +24,8 @@ export default function IPhoneCameraTextCarousel({
   const [isDragging, setIsDragging] = useState(false);
   const carouselItems = useRef<HTMLDivElement[]>([]);
 
-  const carouselXTranslate = useMemo(() => {
+  const [carouselXTranslate, setCarouselXTranslate] = useState(0);
+  useEffect(() => {
     const elapsedWidth = carouselItems.current
       .filter((_, index) => index < selectedIndex)
       .reduce(
@@ -35,11 +38,13 @@ export default function IPhoneCameraTextCarousel({
 
     const xResult = window.innerWidth / 2 - elapsedWidth - currentItemWidth / 2;
 
-    if (isDragging) return xResult + currentX;
-    return xResult;
-  }, [selectedIndex, isDragging, currentX]);
+    if (isDragging) setCarouselXTranslate(xResult + currentX);
+    else setCarouselXTranslate(xResult);
+  }, [items, selectedIndex, isDragging, currentX]);
 
-  const { index: carouselItemInCrossHairIndex } = useMemo(() => {
+  const [carouselItemInCrossHairIndex, setCarouselItemInCrossHairIndex] =
+    useState(0);
+  useEffect(() => {
     if (isDragging) {
       const carouselElapsedWidth = window.innerWidth / 2 - carouselXTranslate;
       const result = carouselItems.current.reduce(
@@ -56,14 +61,11 @@ export default function IPhoneCameraTextCarousel({
           index: 0,
         }
       );
-      return result;
+      setCarouselItemInCrossHairIndex(result.index);
     } else {
-      return {
-        elapsedX: 0,
-        index: selectedIndex,
-      };
+      setCarouselItemInCrossHairIndex(selectedIndex);
     }
-  }, [carouselXTranslate, isDragging, selectedIndex]);
+  }, [items, carouselXTranslate, isDragging, selectedIndex]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
