@@ -12,6 +12,6 @@ export const getProjects = new ApiContract(
 
 export const getMedia = new ApiContract(
   METHOD.GET,
-  "/api/media?populate[0]=project",
+  "/api/media?populate[0]=project&populate[1]=media",
   resultSchema(mediaItemSchema)
 );

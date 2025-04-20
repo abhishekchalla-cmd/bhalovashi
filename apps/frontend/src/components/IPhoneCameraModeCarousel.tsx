@@ -3,19 +3,21 @@
 import { alteDIN } from "@/fonts";
 import { useState, useEffect, useRef, useMemo } from "react";
 
-interface IPhoneCameraTextCarouselProps {
-  items: string[];
-  onSelect: (index: number) => void;
+export type Item = { id: string; label: string };
+
+interface IPhoneCameraModeCarouselProps {
+  items: Item[];
+  onSelect: (item: Item) => any;
   initialIndex?: number;
   overlayClassName?: string;
 }
 
-export default function IPhoneCameraTextCarousel({
+export default function IPhoneCameraModeCarousel({
   items,
   onSelect,
   initialIndex = 0,
   overlayClassName,
-}: IPhoneCameraTextCarouselProps) {
+}: IPhoneCameraModeCarouselProps) {
   const carouselItemSpace = 8;
 
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
@@ -88,7 +90,7 @@ export default function IPhoneCameraTextCarousel({
   };
 
   useEffect(() => {
-    onSelect(selectedIndex);
+    onSelect(items[selectedIndex]);
   }, [selectedIndex, onSelect]);
 
   return (
@@ -107,7 +109,7 @@ export default function IPhoneCameraTextCarousel({
         {items.map((item, index) => (
           <div
             key={index}
-            className={`${alteDIN.className} h-5 flex items-center justify-center uppercase text-center transition-all duration-300 ${
+            className={`${alteDIN.className} h-5 flex items-center justify-center uppercase text-center transition-all duration-300 cursor-pointer ${
               index ===
               (isDragging ? carouselItemInCrossHairIndex : selectedIndex)
                 ? "text-yellow-300 font-medium"
@@ -120,7 +122,7 @@ export default function IPhoneCameraTextCarousel({
             }}
             onClick={() => setSelectedIndex(index)}
           >
-            {item}
+            {item.label}
           </div>
         ))}
       </div>

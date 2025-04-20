@@ -3,16 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "pre-build": "ts-node --project prebuild.tsconfig.json pre-build.ts",
+    "dev": "yarn pre-build && next dev --turbopack",
+    "build": "yarn pre-build && next build",
+    "start": "yarn pre-build && next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@bhalovashi/api-contracts": "*",
     "@bhalovashi/types": "*",
     "@bhalovashi/utils": "*",
+    "@types/moment": "^2.13.0",
+    "dotenv": "^16.5.0",
     "global": "^4.4.0",
+    "moment": "^2.30.1",
     "next": "15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -29,5 +33,6 @@
     "eslint-config-next": "15.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "appDataFilePath": "./app-data.json"
 }

@@ -6,15 +6,7 @@ const backendHostFromMobile =
   isDomainOnMobile &&
   url
     .split(":")
-    .map((_, idx) =>
-      idx !== 2
-        ? _
-        : _.split("/")
-            .map((__, idx) =>
-              idx === 0 ? process.env.NEXT_PUBLIC_API_PORT : __
-            )
-            .join("/")
-    )
+    .map((_, idx) => (idx !== 2 ? _ : process.env.NEXT_PUBLIC_API_PORT))
     .join(":");
 
 export const config = {
@@ -22,4 +14,8 @@ export const config = {
     isDev && isDomainOnMobile
       ? backendHostFromMobile
       : process.env.NEXT_PUBLIC_API_BASE_URL,
+};
+
+export const timeFormats = {
+  shortDate: "D MMM Y, HH:mm a",
 };

@@ -1,27 +1,26 @@
 "use client";
 
 import { useRouter } from "next/router";
-import Button from "@/components/button";
 import { useAppContext } from "@/contexts/AppContext";
 import { useEffect, useState } from "react";
-import { appInitContext } from "@/init";
+import { usePathname } from "next/navigation";
+import { useAppData } from "@/utils/app-data";
+import Button from "@/components/button";
 
 export default function Home() {
   const { isEntered, enter } = useAppContext();
+  const router = useRouter();
+  const { projects } = useAppData();
 
   const animationDurationInMS = 300;
 
-  const router = useRouter();
-
   useEffect(() => {
-    appInitContext.getProjects().then((projects) => {
-      if (isEntered) {
-        setTimeout(
-          () => router.replace(`/project/${projects[0].id}`),
-          animationDurationInMS
-        );
-      }
-    });
+    if (isEntered) {
+      setTimeout(
+        () => router.replace(`/project/${projects[0].id}`),
+        animationDurationInMS
+      );
+    }
   }, [isEntered]);
 
   const [{ windowHeight, windowWidth }, setWindowDims] = useState({
@@ -39,7 +38,7 @@ export default function Home() {
 
   return (
     <div className="h-[calc(var(--vh,1vh)*100)] bg-gray-900 w-screen flex items-center justify-center">
-      <div
+      <Button
         className={`flex items-center justify-center cursor-pointer rounded-lg bg-gradient-to-bl from-black to-gray-900 absolute`}
         style={{
           ...(isEntered
@@ -67,7 +66,7 @@ export default function Home() {
         onClick={enter}
       >
         ENTER
-      </div>
+      </Button>
     </div>
   );
 }

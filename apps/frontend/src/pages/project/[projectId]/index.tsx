@@ -1,17 +1,38 @@
-import IPhoneCameraTextCarousel from "@/components/IPhoneCameraTextCarousel";
-import { appInitContext } from "@/init";
+import IPhoneCameraModeCarousel, {
+  Item,
+} from "@/components/IPhoneCameraModeCarousel";
+import { appData, useAppData } from "@/utils/app-data";
+import { getMediaUrl } from "@/utils/media";
 import { Project } from "@bhalovashi/types/project";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function ProjectPage(props: { project: Project }) {
   const { project } = props;
+  const router = useRouter();
+  const { projects, media } = useAppData();
 
-  const [selectedMode, setSelectedMode] = useState(0);
-  const cameraModes = ["Photo", "Video", "Portrait", "Pano"];
+  const projectIndex = useMemo(
+    () => projects.indexOf(projects.find((p) => p.id === project.id)!),
+    []
+  );
+
+  const carouselItems = useMemo<Item[]>(
+    () => projects.map((p) => ({ id: p.id + "", label: p.name })),
+    []
+  );
+  const setSelectedProject = useCallback((project: Item) => {
+    router.replace(`/project/${project.id}`);
+  }, []);
 
   const topBarHeight = 20;
   const bottomBarHeight = 40;
+
+  const projectThumbnail = useMemo(
+    () => media.find((m) => m.id === project.thumbnail_media.id)!,
+    [project]
+  );
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -57,16 +78,25 @@ export default function ProjectPage(props: { project: Project }) {
 
       <div className={`h-${bottomBarHeight} bg-black`}>
         <div className="flex flex-col items-center">
-          <IPhoneCameraTextCarousel
-            items={cameraModes}
-            onSelect={setSelectedMode}
-            initialIndex={0}
+          <IPhoneCameraModeCarousel
+            items={carouselItems}
+            onSelect={setSelectedProject}
+            initialIndex={projectIndex}
             overlayClassName="w-full max-w-[600px] mx-auto"
           />
 
           <div className="w-full grid grid-cols-3 gap-x-2 mt-4 px-3 items-center max-w-[600px]">
             <div>
-              <div className="w-14 h-14 bg-gray-400 rounded-lg"></div>
+              <Image
+                className="w-14 h-14 bg-gray-400 rounded-lg cursor-pointer"
+                src={getMediaUrl(projectThumbnail.media.formats.small.url)}
+                alt="Project Thumbnail"
+                width={48}
+                height={48}
+                onClick={() =>
+                  router.push(`/project/${project.id}/${projectThumbnail.id}`)
+                }
+              />
             </div>
             <div className="flex justify-center">
               <Image
@@ -99,7 +129,7 @@ export async function getStaticProps({
 }: {
   params: { projectId: string };
 }) {
-  const projects = await appInitContext.getProjects();
+  const projects = appData.data.projects;
   const project = projects.find((p) => p.id === Number(params.projectId));
 
   return {
@@ -110,7 +140,7 @@ export async function getStaticProps({
 }
 
 export async function getStaticPaths() {
-  const projects = await appInitContext.getProjects();
+  const projects = appData.data.projects;
   const pathsConfig = {
     paths: projects.map((p) => ({ params: { projectId: p.id + "" } })),
     fallback: "blocking",
