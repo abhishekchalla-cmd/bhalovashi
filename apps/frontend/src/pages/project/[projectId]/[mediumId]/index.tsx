@@ -33,9 +33,7 @@ export default function MediumPage({ medium }: { medium: Media }) {
         </div>
         <div className="flex flex-col justify-center items-center col-span-4">
           <span className="text-white font-semibold">{medium.title}</span>
-          <span className="text-gray-500 text-sm">
-            {moment(medium.createdAt).format(timeFormats.shortDate)}
-          </span>
+          <span className="text-gray-500 text-sm">{medium.project.name}</span>
         </div>
         <div className="flex justify-end">
           <button className="flex items-center justify-center bg-gray-800 h-8 w-8 rounded-full">
