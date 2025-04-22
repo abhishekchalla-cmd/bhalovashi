@@ -2,6 +2,7 @@ import IOSSlider from "@/components/IOSSlider";
 import {
   IOSSLIDER_ITEM_STATE,
   IOSSliderItem,
+  SliderItemId,
 } from "@/components/IOSSlider/types";
 import { useMemo, useState } from "react";
 
@@ -50,7 +51,7 @@ export default function IOSSliderTest() {
       },
     ];
   }, []);
-  const [selectedItemId, setSelectedItemId] = useState<number | string>(
+  const [selectedItemId, setSelectedItemId] = useState<SliderItemId>(
     items[0].id
   );
 
@@ -62,10 +63,11 @@ export default function IOSSliderTest() {
         {selectedItemId}
       </div>
       <IOSSlider
-        className="mt-10"
+        className="mt-10 h-20"
         items={items}
         defaultSelectedItemId={selectedItemId}
-        handleItemStateChange={(item, state) => {
+        renderItem={(item, state) => {
+          const transitionTime = 0.1;
           const nameChunks = item.data.name.split(" ");
           const innerText =
             nameChunks[0][0].toUpperCase() + nameChunks[1][0].toUpperCase();
@@ -77,7 +79,7 @@ export default function IOSSliderTest() {
               <div
                 key={item.id}
                 className="px-3 py-2 bg-gray-600 text-white rounded text-lg font-semibold"
-                style={{ transition: "0.4s" }}
+                style={{ transition: transitionTime + "s" }}
               >
                 {innerText}
               </div>
@@ -89,18 +91,17 @@ export default function IOSSliderTest() {
               <div
                 key={item.id}
                 className="px-3 py-2 bg-orange-500 text-black rounded text-lg font-semibold"
-                style={{ transition: "0.4s" }}
+                style={{ transition: transitionTime + "s" }}
               >
                 {innerText}
               </div>
             );
           } else {
-            setSelectedItemId(item.id);
             return (
               <div
                 key={item.id}
-                className="px-3 py-4 bg-purple-700 text-white rounded text-lg font-semibold"
-                style={{ transition: "0.4s" }}
+                className="px-3 py-2 bg-purple-700 text-white rounded text-lg font-semibold"
+                style={{ transition: transitionTime + "s" }}
               >
                 {innerText}
               </div>

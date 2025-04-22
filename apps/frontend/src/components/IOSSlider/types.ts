@@ -1,7 +1,12 @@
+import React from "react";
+
 export const SLIDER_STATE = {
-  STATIONARY: "stationary",
+  STARTING: "starting",
+  STARTED: "started",
+  STATIONED: "stationed",
   DRAGGING: "dragging",
   RELEASED: "released",
+  ITEM_SELECTED: "item_selected",
 } as const;
 
 export type SliderState = (typeof SLIDER_STATE)[keyof typeof SLIDER_STATE];
@@ -16,20 +21,20 @@ export const IOSSLIDER_ITEM_STATE = {
 export type ItemState =
   (typeof IOSSLIDER_ITEM_STATE)[keyof typeof IOSSLIDER_ITEM_STATE];
 
+export type SliderItemId = number | string;
+
 export type IOSSliderItem<ID> = {
-  id: number | string;
+  id: SliderItemId;
   data: ID;
 };
 
 export type IOSSliderProps<ID> = {
   items: IOSSliderItem<ID>[];
-  handleItemStateChange: (
-    item: IOSSliderItem<ID>,
-    state: ItemState
-  ) => React.ReactNode;
-  defaultSelectedItemId: number | string;
+  renderItem: (item: IOSSliderItem<ID>, state: ItemState) => React.ReactNode;
+  defaultSelectedItemId: SliderItemId;
   className?: string;
   style?: any;
+  onItemChange?: (item: IOSSliderItem<ID>) => any;
 };
 
 export type XInstant = { timeStamp: number; x: number };
@@ -40,14 +45,18 @@ export type SliderStateData = {
   releaseInstantTimestamp: number;
   releaseXInstantsCalculator: (elapsedTime: number) => number;
   xTranslate: number;
+  lastXTranslate: number | null;
 
   consts: {
     minX?: number;
     maxX?: number;
+    refs?: RefsCollection;
+    crossHairX?: number;
   };
 
-  selectedItemId: number | string;
-  itemIdInCrosshair: string | number;
+  selectedItemId: SliderItemId;
+  hasItemChanged: boolean;
+  itemIdInCrosshair?: string | number;
 };
 
 export const TOUCH_EVENT_TYPE = {
@@ -59,3 +68,52 @@ export const TOUCH_EVENT_TYPE = {
 
 export type TouchEventType =
   (typeof TOUCH_EVENT_TYPE)[keyof typeof TOUCH_EVENT_TYPE];
+
+type RefsCollection = {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  trayRef: React.RefObject<HTMLDivElement | null>;
+};
+
+export const SLIDER_ACTION = {
+  LOAD: "load",
+  DRAG: "drag",
+  RELEASE: "release",
+  HANDLE_RELEASE__F: "handle_release_frame",
+  SELECT_ITEM: "select_item",
+  CENTER_ITEM__F: "center_item_frame",
+} as const;
+
+export type SliderActionType =
+  (typeof SLIDER_ACTION)[keyof typeof SLIDER_ACTION];
+
+export type SliderActionObject =
+  | {
+      type: typeof SLIDER_ACTION.LOAD;
+      payload: {
+        refs: RefsCollection;
+      };
+    }
+  | {
+      type: typeof SLIDER_ACTION.DRAG;
+      payload: {
+        clientX: number;
+      };
+    }
+  | {
+      type: typeof SLIDER_ACTION.RELEASE;
+      payload: {};
+    }
+  | {
+      type: typeof SLIDER_ACTION.HANDLE_RELEASE__F;
+      payload: {};
+    }
+  | {
+      type: typeof SLIDER_ACTION.SELECT_ITEM;
+      payload: {
+        itemId: SliderItemId;
+      };
+    }
+  | {
+      type: typeof SLIDER_ACTION.CENTER_ITEM__F;
+      payload: {};
+    };
