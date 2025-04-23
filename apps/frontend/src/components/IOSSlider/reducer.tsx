@@ -3,6 +3,7 @@ import {
   SLIDER_ACTION,
   SLIDER_STATE,
   SliderActionObject,
+  SliderItemId,
   SliderStateData,
   XInstant,
 } from "./types";
@@ -50,7 +51,7 @@ export default function sliderReducer(
 
     case SLIDER_ACTION.SELECT_ITEM:
       state.hasItemChanged = state.selectedItemId !== payload.itemId;
-      state.selectedItemId = payload.itemId;
+      selectItem(state, payload.itemId);
       break;
 
     case SLIDER_ACTION.DRAG:
@@ -138,8 +139,7 @@ const handleReleaseFrame = (state: SliderStateData) => {
   } else {
     // Release finished
     determineItemInCrosshair(state);
-    state.selectedItemId = state.itemIdInCrosshair!;
-    state.state = SLIDER_STATE.ITEM_SELECTED;
+    selectItem(state, state.itemIdInCrosshair!);
 
     state.releaseXInstantsCalculator = (e) => e;
     state.releaseInstantTimestamp = 0;
@@ -147,8 +147,58 @@ const handleReleaseFrame = (state: SliderStateData) => {
   }
 };
 
+const initialiseCenteringParams = (state: SliderStateData) => {
+  const targetItem = document.getElementById(
+      getSliderItemId(state.selectedItemId)
+    )!,
+    currentX = state.xTranslate,
+    desiredX =
+      currentX -
+      (targetItem.getBoundingClientRect().x -
+        (state.consts.crossHairX! - targetItem.clientWidth / 2));
+
+  state.centeringParams = {
+    itemSelectionTimeStamp: new Date().getTime(),
+    initialX: state.xTranslate,
+    desiredX,
+    shiftDir: Math.sign(desiredX - currentX),
+    a: (desiredX - currentX) * 20,
+    c: 2,
+  };
+};
+
+const selectItem = (state: SliderStateData, itemId: SliderItemId) => {
+  state.selectedItemId = itemId;
+  state.state = SLIDER_STATE.ITEM_SELECTED;
+  initialiseCenteringParams(state);
+};
+
 const handleItemCenteringFrame = (state: SliderStateData) => {
-  state.state = SLIDER_STATE.STATIONED;
+  const { a, c, desiredX, itemSelectionTimeStamp, shiftDir, initialX } =
+    state.centeringParams!;
+  const currentTimeStamp = new Date().getTime();
+  const elapsedTime = currentTimeStamp - itemSelectionTimeStamp;
+
+  const x = (t: number) =>
+    a * Math.log(Math.pow(t / 1000, 2) + 1) - c * (t / 1000);
+
+  const newX = initialX + x(elapsedTime);
+
+  // Set X
+  if (
+    // Approaching left
+    (shiftDir === -1 && newX >= desiredX) ||
+    // Approaching right
+    (shiftDir === 1 && newX <= desiredX)
+  ) {
+    if (state.xTranslate !== newX) state.lastXTranslate = state.xTranslate;
+    state.xTranslate = newX;
+  } else {
+    // Centering finished
+    state.xTranslate = desiredX;
+    state.state = SLIDER_STATE.STATIONED;
+  }
+  // state.state = SLIDER_STATE.STATIONED;
 };
 
 /*

@@ -21,6 +21,7 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const trayRef = useRef<HTMLDivElement | null>(null);
+  const needsCenteringRef = useRef(false);
 
   /*
   
@@ -35,6 +36,35 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
   const [state, dispatch] = useReducer(sliderReducer, sliderInitialState);
 
   const stateOutsideClosure = useRef(state.state);
+
+  // Add ResizeObserver for trayRef
+  useEffect(() => {
+    if (!trayRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      console.log("Needs centering");
+      needsCenteringRef.current = true;
+    });
+
+    resizeObserver.observe(trayRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  // Handle centering when in STATIONED state
+  useEffect(() => {
+    if (state.state === SLIDER_STATE.STATIONED && needsCenteringRef.current) {
+      needsCenteringRef.current = false;
+      dispatch({
+        type: SLIDER_ACTION.SELECT_ITEM,
+        payload: {
+          itemId: state.selectedItemId,
+        },
+      });
+    }
+  }, [state.state]);
 
   useEffect(() => {
     stateOutsideClosure.current = state.state;
@@ -94,6 +124,8 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
     });
   }, []);
 
+  if (state.state === SLIDER_STATE.STATIONED) console.log("Stationed");
+
   /*
 
 
@@ -126,7 +158,15 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
       onTouchStart={touchStartHandler}
       onMouseDown={mouseDownHandler}
     >
-      <div id="ioss-write"></div>
+      <div
+        style={{
+          position: "absolute",
+          left: "calc(50% - 1px)",
+          height: "15px",
+          width: "2px",
+          background: "red",
+        }}
+      />
       <div
         ref={trayRef}
         style={{

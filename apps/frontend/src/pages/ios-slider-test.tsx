@@ -100,7 +100,7 @@ export default function IOSSliderTest() {
             return (
               <div
                 key={item.id}
-                className="px-3 py-2 bg-purple-700 text-white rounded text-lg font-semibold"
+                className="px-3 mx-2 py-2 bg-purple-700 text-white rounded text-lg font-semibold"
                 style={{ transition: transitionTime + "s" }}
               >
                 {innerText}

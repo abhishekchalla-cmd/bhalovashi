@@ -57,6 +57,14 @@ export type SliderStateData = {
   selectedItemId: SliderItemId;
   hasItemChanged: boolean;
   itemIdInCrosshair?: string | number;
+  centeringParams?: {
+    shiftDir: number;
+    itemSelectionTimeStamp: number;
+    initialX: number;
+    desiredX: number;
+    a: number;
+    c: number;
+  };
 };
 
 export const TOUCH_EVENT_TYPE = {
