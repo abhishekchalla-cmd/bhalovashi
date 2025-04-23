@@ -1,0 +1,44 @@
+@startuml
+
+
+state "Initialization" as init {
+    [*] --> started : E.load
+    started --> item_selected : E.selectDefaultItem
+}
+
+state "Centering" as center {
+    item_selected --> centering : E.centerItem
+    centering --> centering : E.centerItem
+    centering --> stationed : E.centerItem
+}
+
+state "Dragging" as drag {
+    state "Uncentering" as uncenter {
+        dragging_uncenter --> dragging_uncenter : A.drag
+        dragging_uncenter --> dragging_uncenter : E.uncenterItem
+        dragging_uncenter --> dragging : E.uncenterItem
+        dragging_uncenter --> released_uncenter : A.release
+    }
+    
+    stationed --> dragging_uncenter : A.drag
+    dragging --> released : A.release
+}
+
+state "Slowing Down" as slow {
+    state "Uncentering" as slow_uncenter {
+        released_uncenter --> slowing_uncenter : E.initSlowdownWithUncentering
+        slowing_uncenter --> slowing_uncenter : E.handleSlowDown
+        slowing_uncenter --> slowing_uncenter : E.uncenterItem
+        slowing_uncenter --> slowing : E.uncenterItem
+        slowing_uncenter --> select_uncenter : E.handleSlowDown
+        select_uncenter --> centering : E.uncenterItem
+    }
+    
+    released --> slowing : E.initSlowdown
+    slowing --> slowing : E.slowdown
+    slowing --> item_selected : E.slowdown
+}
+
+stationed --> [*]
+
+@enduml

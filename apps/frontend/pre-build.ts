@@ -17,9 +17,19 @@ const main = async () => {
     .makeRequest(axiosInstance, {})
     .then((res) => res.data);
 
+  const sortedMedia = [];
+  for (const project of projects) {
+    const projectMedia = media.filter((m) => m.project.id === project.id);
+    const thumbnailMedia = projectMedia.find(
+      (m) => m.id === project.thumbnail_media.id
+    )!;
+    projectMedia.splice(projectMedia.indexOf(thumbnailMedia), 1);
+    sortedMedia.push(thumbnailMedia, ...projectMedia);
+  }
+
   writeFileSync(
     resolve(__dirname, require("./package.json").appDataFilePath),
-    JSON.stringify({ data: { projects, media } }, null, 2)
+    JSON.stringify({ data: { projects, media: sortedMedia } }, null, 2)
   );
 };
 

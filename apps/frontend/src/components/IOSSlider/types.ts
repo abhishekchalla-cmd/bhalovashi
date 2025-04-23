@@ -30,10 +30,15 @@ export type IOSSliderItem<ID> = {
 
 export type IOSSliderProps<ID> = {
   items: IOSSliderItem<ID>[];
-  renderItem: (item: IOSSliderItem<ID>, state: ItemState) => React.ReactNode;
+  renderItem: (
+    item: IOSSliderItem<ID>,
+    state: ItemState,
+    isDragging: boolean
+  ) => React.ReactNode;
   defaultSelectedItemId: SliderItemId;
   className?: string;
   style?: any;
+  onItemInCrosshair?: (item: IOSSliderItem<ID>) => any;
   onItemChange?: (item: IOSSliderItem<ID>) => any;
 };
 
@@ -89,6 +94,7 @@ export const SLIDER_ACTION = {
   HANDLE_RELEASE__F: "handle_release_frame",
   SELECT_ITEM: "select_item",
   CENTER_ITEM__F: "center_item_frame",
+  RESET: "reset",
 } as const;
 
 export type SliderActionType =
@@ -123,5 +129,9 @@ export type SliderActionObject =
     }
   | {
       type: typeof SLIDER_ACTION.CENTER_ITEM__F;
+      payload: {};
+    }
+  | {
+      type: typeof SLIDER_ACTION.RESET;
       payload: {};
     };

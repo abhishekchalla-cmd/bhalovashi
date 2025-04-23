@@ -88,6 +88,9 @@ export default function sliderReducer(
     case SLIDER_ACTION.CENTER_ITEM__F:
       handleItemCenteringFrame(state);
       break;
+
+    case SLIDER_ACTION.RESET:
+      return _.cloneDeep(sliderInitialState);
   }
 
   if (state.state !== SLIDER_STATE.STARTING) determineItemInCrosshair(state);
@@ -174,31 +177,40 @@ const selectItem = (state: SliderStateData, itemId: SliderItemId) => {
 };
 
 const handleItemCenteringFrame = (state: SliderStateData) => {
-  const { a, c, desiredX, itemSelectionTimeStamp, shiftDir, initialX } =
-    state.centeringParams!;
-  const currentTimeStamp = new Date().getTime();
-  const elapsedTime = currentTimeStamp - itemSelectionTimeStamp;
+  // const { a, c, desiredX, itemSelectionTimeStamp, shiftDir, initialX } =
+  //   state.centeringParams!;
+  // const currentTimeStamp = new Date().getTime();
+  // const elapsedTime = currentTimeStamp - itemSelectionTimeStamp;
 
-  const x = (t: number) =>
-    a * Math.log(Math.pow(t / 1000, 2) + 1) - c * (t / 1000);
+  // const x = (t: number) =>
+  //   a * Math.log(Math.pow(t / 1000, 2) + 1) - c * (t / 1000);
 
-  const newX = initialX + x(elapsedTime);
+  // const newX = initialX + x(elapsedTime);
 
-  // Set X
-  if (
-    // Approaching left
-    (shiftDir === -1 && newX >= desiredX) ||
-    // Approaching right
-    (shiftDir === 1 && newX <= desiredX)
-  ) {
-    if (state.xTranslate !== newX) state.lastXTranslate = state.xTranslate;
-    state.xTranslate = newX;
-  } else {
-    // Centering finished
-    state.xTranslate = desiredX;
-    state.state = SLIDER_STATE.STATIONED;
+  // // Set X
+  // if (
+  //   // Approaching left
+  //   (shiftDir === -1 && newX >= desiredX) ||
+  //   // Approaching right
+  //   (shiftDir === 1 && newX <= desiredX)
+  // ) {
+  //   if (state.xTranslate !== newX) state.lastXTranslate = state.xTranslate;
+  //   state.xTranslate = newX;
+  // } else {
+  //   // Centering finished
+  //   state.xTranslate = desiredX;
+  //   state.state = SLIDER_STATE.STATIONED;
+  // }
+  if (state.selectedItemId) {
+    const targetItem = document.getElementById(
+      getSliderItemId(state.selectedItemId)
+    ) as HTMLDivElement;
+    const tiCurrentX = targetItem.getBoundingClientRect().x,
+      desiredX = state.consts.crossHairX! - targetItem.clientWidth / 2 - 5,
+      shiftRequired = desiredX - tiCurrentX;
+    state.xTranslate += shiftRequired;
   }
-  // state.state = SLIDER_STATE.STATIONED;
+  state.state = SLIDER_STATE.STATIONED;
 };
 
 /*

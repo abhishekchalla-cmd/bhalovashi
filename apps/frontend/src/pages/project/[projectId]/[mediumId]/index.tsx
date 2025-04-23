@@ -1,23 +1,62 @@
-import { timeFormats } from "@/config";
-import { appData } from "@/utils/app-data";
-import { getMediaUrl } from "@/utils/media";
+import IOSSlider from "@/components/IOSSlider";
+import {
+  IOSSLIDER_ITEM_STATE,
+  IOSSliderItem,
+} from "@/components/IOSSlider/types";
+import LargeImageSlider, {
+  LARGE_IMAGE_SLIDER_ITEM_TYPE,
+} from "@/components/LargeImageSlider";
+import { appData, useAppData } from "@/utils/app-data";
+import { getLargestMediaFormat, getMediaUrl } from "@/utils/media";
+import { NoSSRImage } from "@/utils/no-ssr-image";
 import { Media } from "@bhalovashi/types/media";
-import moment from "moment";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { useEffect, useMemo, useState } from "react";
 
-export default function MediumPage({ medium }: { medium: Media }) {
+export default function MediumPage({
+  medium,
+  index,
+}: {
+  medium: Media;
+  index: number;
+}) {
+  const { media } = useAppData();
+  const router = useRouter();
+
   const [mounted, setMounted] = useState(false);
 
+  // console.log(`Medium ID: ${medium.id}`);
+
   const topBarHeight = 18;
-  const bottomBarHeight = 24;
+  const bottomBarHeight = 28;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const mainMedia = medium.media.formats.medium!;
+  const items = useMemo(() => {
+    const result: IOSSliderItem<{
+      thumbnail: {
+        url: string;
+        height: number;
+        width: number;
+      };
+      projectId: number;
+    }>[] = media.map((m) => ({
+      id: m.id,
+      data: {
+        thumbnail: {
+          url: m.media.formats.thumbnail.url,
+          height: m.media.formats.thumbnail.height,
+          width: m.media.formats.thumbnail.width,
+        },
+        projectId: m.project.id,
+      },
+    }));
+    return result;
+  }, []);
 
   return (
     <div className="w-screen h-[calc(var(--vh,1vh)*100)] bg-black flex flex-col">
@@ -52,66 +91,112 @@ export default function MediumPage({ medium }: { medium: Media }) {
         }}
         className="w-screen flex justify-center items-center"
       >
-        <Image
-          src={getMediaUrl(mainMedia.url)}
-          alt="Loading"
-          height={mainMedia.height}
-          width={mainMedia.width}
+        <LargeImageSlider
+          previousItem={
+            index > 0 ? getLargeImageSliderItem(media[index - 1]) : undefined
+          }
+          currentItem={getLargeImageSliderItem(medium)}
+          nextItem={
+            index < media.length - 1
+              ? getLargeImageSliderItem(media[index + 1])
+              : undefined
+          }
+          onChange={(item) =>
+            router.push(`/project/${item.data.projectId}/${item.id}`)
+          }
         />
       </div>
 
       <div
-        className={`h-${bottomBarHeight} w-screen bg-black grid grid-cols-6 items-center px-2`}
+        className={`h-${bottomBarHeight} flex flex-col w-full justify-between py-2`}
       >
-        <div className="flex justify-start">
-          <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
-            <Image
-              src="/icons/share.svg"
-              alt="Options"
-              width={19}
-              height={15}
-            />
-          </button>
-        </div>
-
-        <div className="col-span-4 flex justify-center">
-          <div className="flex items-center justify-center bg-gray-800 h-11 rounded-full px-3 gap-x-3">
+        <IOSSlider
+          style={{ height: "30px" }}
+          items={items}
+          renderItem={(item, state, isDragging) => {
+            const { thumbnail } = item.data;
+            const mediaUrl = getMediaUrl(thumbnail.url);
+            const mediaWidth = thumbnail.width * (30 / thumbnail.height);
+            return (
+              <div
+                key={item.id}
+                style={{ transition: "0.2s" }}
+                className={`h-full w-3 bg-gray-500 overflow-hidden rounded ${state === IOSSLIDER_ITEM_STATE.SELECTED_AND_IN_CROSSHAIR && !isDragging ? `mx-2` : ""}`}
+              >
+                <NoSSRImage
+                  src={mediaUrl}
+                  style={{
+                    userSelect: "none",
+                    height: "30px",
+                    width: `${mediaWidth}px`,
+                    maxWidth: "unset",
+                  }}
+                  alt={item.id + ""}
+                  height={30}
+                  width={mediaWidth}
+                />
+              </div>
+            );
+          }}
+          defaultSelectedItemId={medium.id}
+          onItemInCrosshair={(m) => {
+            router.push(`/project/${m.data.projectId}/${m.id}`);
+          }}
+          onItemChange={(m) => {
+            router.push(`/project/${m.data.projectId}/${m.id}`);
+          }}
+        />
+        <div className={`w-screen bg-black grid grid-cols-6 items-center px-2`}>
+          <div className="flex justify-start">
             <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
               <Image
-                src="/icons/heart.svg"
+                src="/icons/share.svg"
                 alt="Options"
-                width={23}
-                height={15}
-              />
-            </button>
-            <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
-              <Image
-                src="/icons/info.svg"
-                alt="Options"
-                width={23}
-                height={15}
-              />
-            </button>
-            <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
-              <Image
-                src="/icons/edit.svg"
-                alt="Options"
-                width={23}
+                width={19}
                 height={15}
               />
             </button>
           </div>
-        </div>
 
-        <div className="flex justify-end">
-          <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
-            <Image
-              src="/icons/delete.svg"
-              alt="Options"
-              width={22}
-              height={15}
-            />
-          </button>
+          <div className="col-span-4 flex justify-center">
+            <div className="flex items-center justify-center bg-gray-800 h-11 rounded-full px-3 gap-x-3">
+              <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
+                <Image
+                  src="/icons/heart.svg"
+                  alt="Options"
+                  width={23}
+                  height={15}
+                />
+              </button>
+              <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
+                <Image
+                  src="/icons/info.svg"
+                  alt="Options"
+                  width={23}
+                  height={15}
+                />
+              </button>
+              <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
+                <Image
+                  src="/icons/edit.svg"
+                  alt="Options"
+                  width={23}
+                  height={15}
+                />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
+              <Image
+                src="/icons/delete.svg"
+                alt="Options"
+                width={22}
+                height={15}
+              />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -122,17 +207,35 @@ export default function MediumPage({ medium }: { medium: Media }) {
   );
 }
 
+const getLargeImageSliderItem = (medium: Media) => {
+  const largestMediaFormat = getLargestMediaFormat(medium.media);
+  return {
+    type: LARGE_IMAGE_SLIDER_ITEM_TYPE.IMAGE,
+    id: medium.id,
+    file: {
+      src: getMediaUrl(largestMediaFormat.url),
+      height: largestMediaFormat.height,
+      width: largestMediaFormat.width,
+    },
+    data: {
+      projectId: medium.project.id,
+    },
+  };
+};
+
 export async function getStaticProps({
   params,
 }: {
   params: { projectId: string; mediumId: string };
 }) {
   const media = appData.data.media;
-  const medium = media.find((p) => p.id === Number(params.mediumId));
+  const medium = media.find((p) => p.id === Number(params.mediumId))!;
+  const index = media.indexOf(medium);
 
   return {
     props: {
       medium,
+      index,
     },
   };
 }

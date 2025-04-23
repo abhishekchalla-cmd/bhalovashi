@@ -14,11 +14,15 @@ export default function RootLayout({ Component, pageProps }: any) {
       <html lang="en">
         <body
           className={`${alteDIN.variable} antialiased`}
-          style={{ touchAction: "none" }}
+          style={{
+            touchAction: "none",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+          }}
         >
           <div
             id="phantom-container"
-            className="space-x-8 h-20 h-18 h-40 h-24 hidden"
+            className="space-x-8 h-20 h-18 h-40 h-28 hidden"
           />
           <Component {...pageProps} />
         </body>

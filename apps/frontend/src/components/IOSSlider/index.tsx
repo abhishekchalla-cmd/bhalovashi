@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useReducer, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useReducer,
+  useRef,
+} from "react";
 import {
   IOSSLIDER_ITEM_STATE,
   IOSSliderProps,
@@ -14,6 +20,7 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
     items,
     renderItem,
     onItemChange,
+    onItemInCrosshair,
     defaultSelectedItemId,
     className,
     style,
@@ -21,7 +28,6 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const trayRef = useRef<HTMLDivElement | null>(null);
-  const needsCenteringRef = useRef(false);
 
   /*
   
@@ -37,45 +43,20 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
 
   const stateOutsideClosure = useRef(state.state);
 
-  // Add ResizeObserver for trayRef
-  useEffect(() => {
-    if (!trayRef.current) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-      console.log("Needs centering");
-      needsCenteringRef.current = true;
-    });
-
-    resizeObserver.observe(trayRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  // Handle centering when in STATIONED state
-  useEffect(() => {
-    if (state.state === SLIDER_STATE.STATIONED && needsCenteringRef.current) {
-      needsCenteringRef.current = false;
-      dispatch({
-        type: SLIDER_ACTION.SELECT_ITEM,
-        payload: {
-          itemId: state.selectedItemId,
-        },
-      });
-    }
-  }, [state.state]);
-
   useEffect(() => {
     stateOutsideClosure.current = state.state;
-    if (state.state === SLIDER_STATE.STARTING)
+    if (
+      state.state === SLIDER_STATE.STARTING ||
+      !state.consts.refs?.trayRef.current ||
+      !state.consts.refs?.containerRef.current
+    ) {
       dispatch({
         type: SLIDER_ACTION.LOAD,
         payload: {
           refs: { containerRef, trayRef },
         },
       });
-    else if (state.state === SLIDER_STATE.STARTED)
+    } else if (state.state === SLIDER_STATE.STARTED)
       dispatch({
         type: SLIDER_ACTION.SELECT_ITEM,
         payload: {
@@ -89,6 +70,15 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
       handleItemCentering();
     }
   }, [state.state]);
+
+  useEffect(() => {
+    if (state.itemIdInCrosshair !== undefined && onItemInCrosshair) {
+      const itemInCrosshair = items.find(
+        (i) => i.id === state.itemIdInCrosshair
+      )!;
+      onItemInCrosshair(itemInCrosshair);
+    }
+  }, [state.itemIdInCrosshair]);
 
   /*
 
@@ -124,8 +114,6 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
     });
   }, []);
 
-  if (state.state === SLIDER_STATE.STATIONED) console.log("Stationed");
-
   /*
 
 
@@ -136,19 +124,18 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
 
   */
 
-  const { touchStartHandler, mouseDownHandler } = usePressEventHandlers({
-    onPress: (e) =>
-      dispatch({
-        type: SLIDER_ACTION.DRAG,
-        payload: { clientX: e.clientX },
-      }),
-    onPressMove: (e) =>
-      dispatch({
-        type: SLIDER_ACTION.DRAG,
-        payload: { clientX: e.clientX },
-      }),
-    onRelease: (e) => dispatch({ type: SLIDER_ACTION.RELEASE, payload: {} }),
-  });
+  const { touchStartHandler, mouseDownHandler } = usePressEventHandlers(
+    {
+      onPress: (e) => {},
+      onPressMove: (e) =>
+        dispatch({
+          type: SLIDER_ACTION.DRAG,
+          payload: { clientX: e.clientX },
+        }),
+      onRelease: (e) => dispatch({ type: SLIDER_ACTION.RELEASE, payload: {} }),
+    },
+    []
+  );
 
   return (
     <div
@@ -159,15 +146,6 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
       onMouseDown={mouseDownHandler}
     >
       <div
-        style={{
-          position: "absolute",
-          left: "calc(50% - 1px)",
-          height: "15px",
-          width: "2px",
-          background: "red",
-        }}
-      />
-      <div
         ref={trayRef}
         style={{
           position: "relative",
@@ -175,33 +153,42 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
           display: "flex",
           alignItems: "center",
           left: state.xTranslate + "px",
-          minHeight: "100%",
+          height: "100%",
         }}
       >
-        {items
-          .concat(items.map((i) => ({ ...i, id: Number(i.id) + items.length })))
-          .map((item) => {
-            const itemState =
-              item.id === state.selectedItemId &&
-              item.id === state.itemIdInCrosshair
-                ? IOSSLIDER_ITEM_STATE.SELECTED_AND_IN_CROSSHAIR
-                : item.id === state.selectedItemId &&
-                    item.id !== state.itemIdInCrosshair
-                  ? IOSSLIDER_ITEM_STATE.SELECTED_AND_OUT_OF_CROSSHAIR
-                  : item.id !== state.selectedItemId &&
-                      item.id === state.itemIdInCrosshair
-                    ? IOSSLIDER_ITEM_STATE.NOT_SELECTED_AND_IN_CROSSHAIR
-                    : IOSSLIDER_ITEM_STATE.NOT_SELECTED_AND_OUT_OF_CROSSHAIR;
+        {items.map((item) => {
+          const itemState =
+            item.id === state.selectedItemId &&
+            item.id === state.itemIdInCrosshair
+              ? IOSSLIDER_ITEM_STATE.SELECTED_AND_IN_CROSSHAIR
+              : item.id === state.selectedItemId &&
+                  item.id !== state.itemIdInCrosshair
+                ? IOSSLIDER_ITEM_STATE.SELECTED_AND_OUT_OF_CROSSHAIR
+                : item.id !== state.selectedItemId &&
+                    item.id === state.itemIdInCrosshair
+                  ? IOSSLIDER_ITEM_STATE.NOT_SELECTED_AND_IN_CROSSHAIR
+                  : IOSSLIDER_ITEM_STATE.NOT_SELECTED_AND_OUT_OF_CROSSHAIR;
 
-            return (
-              <div
-                id={getSliderItemId(item.id)}
-                className="h-full float-left px-[2px]"
-              >
-                {renderItem(item, itemState)}
-              </div>
-            );
-          })}
+          return (
+            <div
+              id={getSliderItemId(item.id)}
+              className="h-full float-left px-[2px]"
+              key={item.id}
+              onClick={() =>
+                dispatch({
+                  type: SLIDER_ACTION.SELECT_ITEM,
+                  payload: { itemId: item.id },
+                })
+              }
+            >
+              {renderItem(
+                item,
+                itemState,
+                state.state === SLIDER_STATE.DRAGGING
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

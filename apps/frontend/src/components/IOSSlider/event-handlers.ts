@@ -14,11 +14,10 @@ type UsePressEventHandlersProps = {
   onRelease: ReleaseEventHandler;
 };
 
-export default function usePressEventHandlers({
-  onPress,
-  onPressMove,
-  onRelease,
-}: UsePressEventHandlersProps) {
+export default function usePressEventHandlers(
+  { onPress, onPressMove, onRelease }: UsePressEventHandlersProps,
+  deps: any[]
+) {
   const windowTouchEventListeners = useRef<{
     [event: string]: ((e: TouchEvent) => any) | ((e: MouseEvent) => any);
   }>({});
@@ -76,7 +75,7 @@ export default function usePressEventHandlers({
       clientY: e.targetTouches[0].clientY,
       target: e.target,
     });
-  }, []);
+  }, deps);
 
   const mouseDownHandler = useCallback((e: React.MouseEvent) => {
     /*
@@ -129,7 +128,7 @@ export default function usePressEventHandlers({
       clientY: e.clientY,
       target: e.target,
     });
-  }, []);
+  }, deps);
 
   return { touchStartHandler, mouseDownHandler };
 }

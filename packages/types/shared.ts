@@ -36,6 +36,17 @@ export const imageFormatSchema = z.object({
   url: z.string(),
 });
 
+export type ImageFormatSchema = z.infer<typeof imageFormatSchema>;
+
+export const mediaFormatSchema = z.object({
+  thumbnail: imageFormatSchema,
+  small: imageFormatSchema,
+  medium: imageFormatSchema.optional(),
+  large: imageFormatSchema.optional(),
+});
+
+export type MediaFormatSchema = z.infer<typeof mediaFormatSchema>;
+
 // Schema for media
 export const mediaSchema = z.object({
   id: z.number(),
@@ -45,12 +56,7 @@ export const mediaSchema = z.object({
   caption: z.string().nullable(),
   width: z.number(),
   height: z.number(),
-  formats: z.object({
-    thumbnail: imageFormatSchema,
-    small: imageFormatSchema,
-    medium: imageFormatSchema.optional(),
-    large: imageFormatSchema.optional(),
-  }),
+  formats: mediaFormatSchema,
   hash: z.string(),
   ext: z.string(),
   mime: z.string(),
