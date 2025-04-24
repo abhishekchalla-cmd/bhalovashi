@@ -14,7 +14,9 @@ export default function ProjectPage(props: { project: Project }) {
   const { project } = props;
   const router = useRouter();
   const { projects, media } = useAppData();
-  const { initMediaTransition } = useContext(PhotoDragTransitionContext);
+  const { initMediaTransition, setHasTargetPageLoaded } = useContext(
+    PhotoDragTransitionContext
+  );
 
   const projectIndex = useMemo(
     () => projects.indexOf(projects.find((p) => p.id === project.id)!),
@@ -40,6 +42,7 @@ export default function ProjectPage(props: { project: Project }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
+    setHasTargetPageLoaded!();
   }, []);
 
   return (
@@ -111,11 +114,13 @@ export default function ProjectPage(props: { project: Project }) {
                     {
                       id: projectThumbnail.id,
                       projectId: project.id,
-                      url: getLargestMediaFormat(projectThumbnail.media).url,
-                      mediaDims: _.pick(
-                        getLargestMediaFormat(projectThumbnail.media),
-                        ["height", "width"]
+                      url: getMediaUrl(
+                        projectThumbnail.media.formats.small.url
                       ),
+                      mediaDims: _.pick(projectThumbnail.media.formats.small, [
+                        "height",
+                        "width",
+                      ]),
                     },
                     1
                   )

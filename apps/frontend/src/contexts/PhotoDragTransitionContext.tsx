@@ -6,22 +6,33 @@ import usePressEventHandlers, {
 } from "@/components/IOSSlider/event-handlers";
 import { galleryBottomBarHeight, galleryTopBarHeight } from "@/config";
 import { CoordsInstant } from "@/utils/event";
-import { getMediaUrl } from "@/utils/media";
+import { getEventListeners } from "events";
 import { useRouter } from "next/router";
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
+
+type MediaFormat = {
+  id: number | string;
+  url: string;
+  projectId: number;
+  mediaDims: MediaDims;
+};
 
 type PhotoDragTransitionContextType = {
   initMediaTransition?: (
-    mediaFormat: {
-      id: number | string;
-      url: string;
-      projectId: number;
-      mediaDims: MediaDims;
-    },
+    mediaFormat: MediaFormat,
     dir: number,
     initialRectData?: RectData,
     isDragging?: boolean
   ) => void;
+  setHasTargetPageLoaded?: () => void;
+  mediaTransitionState?: MediaTransitionState;
 };
 
 export const PhotoDragTransitionContext =
@@ -49,14 +60,18 @@ type MediaTransitionState = {
   isTransitioning: boolean;
   isAnimating: boolean;
   src?: string;
-  rectState?: RectData;
+  initialRectState?: RectData;
+  currentRectState?: RectData;
+  finalRectState?: RectData;
   dir?: number; // 1 is towards gallery, -1 is towards camera
   isDragging: boolean;
+  mediaFormat?: MediaFormat;
   dragState?: {
     initialCoords: CoordsInstant;
     previousCoords: CoordsInstant;
     currentCoords: CoordsInstant;
   };
+  hasTargetPageLoaded?: boolean;
 };
 
 export default function PhotoDragTransitionContextProvider(props: {
@@ -65,6 +80,8 @@ export default function PhotoDragTransitionContextProvider(props: {
   const transitionEndTimeInMS = 250;
   const { children } = props;
   const router = useRouter();
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [mediaTransitionState, setMediaTransitionState] =
     useState<MediaTransitionState>({
@@ -96,15 +113,41 @@ export default function PhotoDragTransitionContextProvider(props: {
     []
   );
 
-  const handleRelease = useCallback<ReleaseEventHandler>(() => {}, []);
+  const handleRelease = useCallback<ReleaseEventHandler>(() => {
+    const dir = Math.sign(
+      mediaTransitionState.dragState!.currentCoords.y -
+        mediaTransitionState.dragState!.initialCoords.y
+    );
+    setMediaTransitionState((v) => {
+      const newState = {
+        ...v,
+        dir,
+        currentRectState: {
+          ...v.currentRectState!,
+          x: v.dragState!.currentCoords.x,
+          y: v.dragState!.currentCoords.y,
+        },
+        finalRectState:
+          dir === 1
+            ? getMediaInGalleryState(
+                mediaTransitionState.mediaFormat!.mediaDims
+              )
+            : getMediaInCameraState(),
+        isDragging: false,
+      };
+      return newState;
+    });
+  }, [mediaTransitionState]);
 
   const { attachPressHandlers } = usePressEventHandlers(
     {
       onPress: () => {},
       onPressMove: handleDrag,
-      onRelease: () => {},
+      onRelease: () => handleRelease,
+      attachingContainerRef: containerRef,
+      name: "photoDrag",
     },
-    [mediaTransitionState]
+    [handleDrag, handleRelease]
   );
 
   const initMediaTransition = useCallback(
@@ -119,101 +162,146 @@ export default function PhotoDragTransitionContextProvider(props: {
       initialRectData?: RectData,
       isDragging: boolean = false
     ) => {
-      const initialRectState =
-          dir === 1
+      const initialRectState = {
+          ...(dir === 1
             ? getMediaInCameraState()
-            : getMediaInGalleryState(media.mediaDims),
+            : getMediaInGalleryState(media.mediaDims)),
+          ...(initialRectData || {}),
+        },
         finalRectState =
           dir === 1
             ? getMediaInGalleryState(media.mediaDims)
             : getMediaInCameraState();
 
-      setMediaTransitionState({
+      const newMediaTransitionState = {
         isTransitioning: true,
         isAnimating: false,
-        src: getMediaUrl(media.url),
-        rectState: {
-          ...initialRectState,
-          ...(initialRectData || {}),
-        },
+        src: media.url,
+        initialRectState,
+        currentRectState: initialRectState,
+        finalRectState,
         isDragging,
+        mediaFormat: media,
         dir,
-      });
+      };
 
-      if (!isDragging)
-        setTimeout(() => {
-          setMediaTransitionState((v) => ({
-            ...v,
-            isAnimating: true,
-            rectState: finalRectState,
-          }));
-
-          setTimeout(() => {
-            if (dir === 1) {
-              router.push(`/project/${media.projectId}/${media.id}`);
-            } else {
-              router.push(`/project/${media.projectId}`);
-            }
-
-            setTimeout(
-              () =>
-                setMediaTransitionState((v) => ({
-                  isTransitioning: false,
-                  isAnimating: false,
-                  isDragging: false,
-                })),
-              500
-            );
-          }, transitionEndTimeInMS);
-        }, 100);
+      setMediaTransitionState(newMediaTransitionState);
+      if (isDragging) {
+        router.push(`/project/${media.projectId}`);
+        attachPressHandlers();
+      }
     },
-    []
+    [attachPressHandlers]
   );
 
-  console.log(JSON.stringify(mediaTransitionState, null, 2));
+  useEffect(() => {
+    const {
+      isDragging,
+      isTransitioning,
+      finalRectState,
+      mediaFormat: media,
+      dir,
+      isAnimating,
+      hasTargetPageLoaded,
+    } = mediaTransitionState;
+
+    if (isTransitioning && !isDragging) {
+      if (!isAnimating) {
+        setMediaTransitionState((v) => ({
+          ...v,
+          isAnimating: true,
+          currentRectState: finalRectState,
+        }));
+
+        setTimeout(() => {
+          if (dir === 1) {
+            router.push(`/project/${media!.projectId}/${media!.id}`);
+          } else {
+            router.push(`/project/${media!.projectId}`);
+          }
+        }, transitionEndTimeInMS);
+      } else if (isAnimating && hasTargetPageLoaded) {
+        setMediaTransitionState((v) => ({
+          isTransitioning: false,
+          isAnimating: false,
+          isDragging: false,
+        }));
+      }
+    }
+  }, [mediaTransitionState]);
 
   return (
-    <PhotoDragTransitionContext.Provider value={{ initMediaTransition }}>
-      {children}
+    <PhotoDragTransitionContext.Provider
+      value={{
+        initMediaTransition,
+        setHasTargetPageLoaded: () =>
+          setMediaTransitionState((v) => ({ ...v, hasTargetPageLoaded: true })),
+        mediaTransitionState,
+      }}
+    >
+      <div className="w-max h-max relative overflow-hidden" ref={containerRef}>
+        {children}
 
-      <div
-        style={{
-          pointerEvents: mediaTransitionState.isTransitioning ? "all" : "none",
-          opacity: mediaTransitionState.isTransitioning ? "1" : "0",
-          position: "absolute",
-          zIndex: "10",
-          transition: transitionEndTimeInMS / 1000 + "s",
-          ...(mediaTransitionState.isTransitioning
-            ? {
-                height: mediaTransitionState.rectState!.height,
-                width: mediaTransitionState.rectState!.width,
-                borderRadius: mediaTransitionState.rectState!.borderRadius,
-                top: mediaTransitionState.rectState!.y,
-                left: mediaTransitionState.rectState!.x,
-              }
-            : {}),
-        }}
-        className="flex items-center justify-center overflow-hidden"
-      >
-        <img src={mediaTransitionState.src} className="min-h-full min-w-full" />
+        <div
+          style={{
+            pointerEvents: mediaTransitionState.isTransitioning
+              ? "all"
+              : "none",
+            opacity: mediaTransitionState.isTransitioning ? "1" : "0",
+            position: "absolute",
+            zIndex: "10",
+            transition: mediaTransitionState.isDragging
+              ? ""
+              : transitionEndTimeInMS / 1000 + "s",
+            ...(mediaTransitionState.isTransitioning
+              ? {
+                  height: mediaTransitionState.currentRectState!.height,
+                  width: mediaTransitionState.currentRectState!.width,
+                  borderRadius:
+                    mediaTransitionState.currentRectState!.borderRadius,
+                  top: mediaTransitionState.isDragging
+                    ? mediaTransitionState.initialRectState!.y +
+                      ((mediaTransitionState.dragState?.currentCoords.y || 0) -
+                        (mediaTransitionState.dragState?.initialCoords.y || 0))
+                    : mediaTransitionState.currentRectState!.y,
+                  left: mediaTransitionState.isDragging
+                    ? mediaTransitionState.initialRectState!.x +
+                      ((mediaTransitionState.dragState?.currentCoords.x || 0) -
+                        (mediaTransitionState.dragState?.initialCoords.x || 0))
+                    : mediaTransitionState.currentRectState!.x,
+                }
+              : {}),
+          }}
+          className="flex items-center justify-center overflow-hidden bg-gray-900"
+        >
+          <div className="w-full h-full text-white flex items-center justify-center">
+            LOADING...
+          </div>
+          <img
+            src={mediaTransitionState.src}
+            className="min-h-full min-w-full absolute h-full w-full top-0 left-0 z-4"
+          />
+        </div>
+
+        <div
+          style={{
+            position: "absolute",
+            zIndex: "5",
+            top: "0px",
+            left: "0px",
+            background: "#000",
+            opacity: mediaTransitionState.isTransitioning ? "1" : "0",
+            pointerEvents: mediaTransitionState.isTransitioning
+              ? "all"
+              : "none",
+            bottom: "0",
+            right: "0",
+            transition: mediaTransitionState.isTransitioning
+              ? transitionEndTimeInMS / 1000 + "s"
+              : "0.1s",
+          }}
+        />
       </div>
-
-      <div
-        style={{
-          position: "absolute",
-          zIndex: "5",
-          top: "0px",
-          left: "0px",
-          background: "#000",
-          opacity: mediaTransitionState.isTransitioning ? "1" : "0",
-          pointerEvents: mediaTransitionState.isTransitioning ? "all" : "none",
-          bottom: "0",
-          right: "0",
-          transition: mediaTransitionState.isTransitioning
-            ? transitionEndTimeInMS / 1000 + "s"
-            : "0.1s",
-        }}
-      />
     </PhotoDragTransitionContext.Provider>
   );
 }
@@ -255,9 +343,9 @@ const getMediaInGalleryState = (mediaDims: MediaDims): RectData => {
 
   const finalY =
     galleryTopBarHeight * 16 * 0.25 + (galleryStageHeight - mediaHeight) / 2;
-  console.log(
-    `galleryTopBarHeight: ${galleryTopBarHeight}, galleryStageHeight: ${galleryStageHeight}, mediaHeight: ${mediaHeight}, mediaWidth: ${mediaWidth}, finalY: ${finalY}`
-  );
+  // console.log(
+  //   `galleryTopBarHeight: ${galleryTopBarHeight}, galleryStageHeight: ${galleryStageHeight}, mediaHeight: ${mediaHeight}, mediaWidth: ${mediaWidth}, finalY: ${finalY}`
+  // );
 
   return {
     x: 0,

@@ -1,5 +1,5 @@
 import { isTouchDevice } from "@/utils/device";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 export type PressEventHandler = (e: {
   clientX: number;
@@ -13,10 +13,18 @@ type UsePressEventHandlersProps = {
   onPress: PressEventHandler;
   onPressMove: PressEventHandler;
   onRelease: ReleaseEventHandler;
+  attachingContainerRef?: React.RefObject<HTMLDivElement | null>;
+  name?: string;
 };
 
 export default function usePressEventHandlers(
-  { onPress, onPressMove, onRelease }: UsePressEventHandlersProps,
+  {
+    onPress,
+    onPressMove,
+    onRelease,
+    attachingContainerRef,
+    name,
+  }: UsePressEventHandlersProps,
   deps: any[]
 ) {
   const windowTouchEventListeners = useRef<{
@@ -34,7 +42,28 @@ export default function usePressEventHandlers(
 
 
   */
+  const removeTouchHandlers = useCallback(() => {
+    console.log(name, "Removing touch handlers");
+    const attachingContainer = attachingContainerRef?.current || window;
+
+    attachingContainer.removeEventListener(
+      "touchmove",
+      windowTouchEventListeners.current.touchMove as any
+    );
+    attachingContainer.removeEventListener(
+      "touchend",
+      windowTouchEventListeners.current.touchEnd as any
+    );
+
+    delete windowTouchEventListeners.current.touchMove;
+    delete windowTouchEventListeners.current.touchEnd;
+  }, []);
+
   const attachTouchHandlers = useCallback(() => {
+    console.log(name, "Attaching touch listeners");
+
+    const attachingContainer = attachingContainerRef?.current || window;
+
     /*
 
 
@@ -42,41 +71,52 @@ export default function usePressEventHandlers(
 
 
       */
-    windowTouchEventListeners.current.touchMove = (e: TouchEvent) =>
+    windowTouchEventListeners.current.touchMove = (e: TouchEvent) => {
+      console.log(name, "touch moving");
       onPressMove({
         clientX: e.targetTouches[0].clientX,
         clientY: e.targetTouches[0].clientY,
         target: e.target,
       });
-    window.addEventListener(
+    };
+    attachingContainer.addEventListener(
       "touchmove",
-      windowTouchEventListeners.current.touchMove
+      windowTouchEventListeners.current.touchMove as EventListener
     );
 
     windowTouchEventListeners.current.touchEnd = (e: TouchEvent) => {
-      window.removeEventListener(
-        "touchmove",
-        windowTouchEventListeners.current.touchMove as any
-      );
-      window.removeEventListener(
-        "touchend",
-        windowTouchEventListeners.current.touchEnd as any
-      );
-
-      delete windowTouchEventListeners.current.touchMove;
-      delete windowTouchEventListeners.current.touchEnd;
+      console.log(name, "Released");
+      removeTouchHandlers();
 
       return onRelease({
         target: e.target,
       });
     };
-    window.addEventListener(
+    attachingContainer.addEventListener(
       "touchend",
-      windowTouchEventListeners.current.touchEnd
+      windowTouchEventListeners.current.touchEnd as EventListener
     );
   }, deps);
 
+  const removeMouseHandlers = useCallback(() => {
+    const attachingContainer = attachingContainerRef?.current || window;
+
+    attachingContainer.removeEventListener(
+      "mousemove",
+      windowTouchEventListeners.current.mouseMove as any
+    );
+    attachingContainer.removeEventListener(
+      "mouseup",
+      windowTouchEventListeners.current.mouseUp as any
+    );
+
+    delete windowTouchEventListeners.current.mouseMove;
+    delete windowTouchEventListeners.current.mouseUp;
+  }, []);
+
   const attachMouseHandlers = useCallback(() => {
+    const attachingContainer = attachingContainerRef?.current || window;
+
     /*
 
 
@@ -90,31 +130,22 @@ export default function usePressEventHandlers(
         clientY: e.clientY,
         target: e.target,
       });
-    window.addEventListener(
+    attachingContainer.addEventListener(
       "mousemove",
-      windowTouchEventListeners.current.mouseMove
+      windowTouchEventListeners.current.mouseMove as EventListener
     );
 
     windowTouchEventListeners.current.mouseUp = (e: MouseEvent) => {
-      window.removeEventListener(
-        "mousemove",
-        windowTouchEventListeners.current.mouseMove as any
-      );
-      window.removeEventListener(
-        "mouseup",
-        windowTouchEventListeners.current.mouseUp as any
-      );
-
-      delete windowTouchEventListeners.current.mouseMove;
-      delete windowTouchEventListeners.current.mouseUp;
+      removeMouseHandlers();
 
       return onRelease({ target: e.target });
     };
-    window.addEventListener(
+
+    attachingContainer.addEventListener(
       "mouseup",
-      windowTouchEventListeners.current.mouseUp
+      windowTouchEventListeners.current.mouseUp as EventListener
     );
-  }, []);
+  }, deps);
 
   /*
 
@@ -159,10 +190,20 @@ export default function usePressEventHandlers(
 
 
   */
-  const attachPressHandlers = () => {
+
+  const attachPressHandlers = useCallback(() => {
+    console.log(name, "attaching press handlers");
     if (isTouchDevice()) attachTouchHandlers();
     else attachMouseHandlers();
-  };
+  }, [attachTouchHandlers, attachMouseHandlers]);
+
+  useEffect(() => {
+    return () => {
+      console.log(name, "removing press handlers");
+      if (isTouchDevice()) removeTouchHandlers();
+      else removeMouseHandlers();
+    };
+  }, []);
 
   return { touchStartHandler, mouseDownHandler, attachPressHandlers };
 }

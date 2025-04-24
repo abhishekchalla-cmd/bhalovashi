@@ -133,6 +133,7 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
           payload: { clientX: e.clientX },
         }),
       onRelease: (e) => dispatch({ type: SLIDER_ACTION.RELEASE, payload: {} }),
+      name: "IOSSlider",
     },
     []
   );

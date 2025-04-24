@@ -38,6 +38,7 @@ type DragState = {
   initialCoords?: CoordsInstant;
   previousCoords?: CoordsInstant;
   currentCoords?: CoordsInstant;
+  pullingDown?: boolean;
   swipe?: {
     dir: number;
     timeout: NodeJS.Timeout;
@@ -51,7 +52,8 @@ const initialDragState: DragState = {
 
 export default function LargeImageSlider(props: LargeImageSliderProps) {
   const { previousItem, currentItem, nextItem, onChange } = props;
-  const { initMediaTransition } = useContext(PhotoDragTransitionContext);
+  const { mediaTransitionState, initMediaTransition, setHasTargetPageLoaded } =
+    useContext(PhotoDragTransitionContext);
 
   const yThreshold = 40,
     xThreshold = 30,
@@ -81,6 +83,8 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
 
   const handleDragMove = useCallback(
     (clientX: number, clientY: number, target: HTMLElement) => {
+      if (dragState.pullingDown) return;
+
       const currentCoordInstant: CoordsInstant = {
         x: clientX,
         y: clientY,
@@ -91,27 +95,28 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
         yDiff = currentCoordInstant.y - dragState.initialCoords!.y;
       if (yDiff > yThreshold) {
         // Image should close
-        // const bcr = target.getBoundingClientRect();
-        // initMediaTransition!(
-        //   {
-        //     id: currentItem.id,
-        //     projectId: currentItem.data.projectId,
-        //     url: currentItem.file.src,
-        //     mediaDims: {
-        //       height: currentItem.file.height,
-        //       width: currentItem.file.width,
-        //     },
-        //   },
-        //   -1,
-        //   {
-        //     x: bcr.x,
-        //     y: bcr.y,
-        //     height: bcr.height,
-        //     width: bcr.width,
-        //     borderRadius: 0,
-        //   },
-        //   true
-        // );
+        const bcr = target.getBoundingClientRect();
+        dragState.pullingDown = true;
+        initMediaTransition!(
+          {
+            id: currentItem.id,
+            projectId: currentItem.data.projectId,
+            url: currentItem.file.src,
+            mediaDims: {
+              height: currentItem.file.height,
+              width: currentItem.file.width,
+            },
+          },
+          -1,
+          {
+            x: bcr.x,
+            y: bcr.y,
+            height: bcr.height,
+            width: bcr.width,
+            borderRadius: 0,
+          },
+          true
+        );
       } else {
         if ((!previousItem && xDiff > 0) || (!nextItem && xDiff < 0)) {
         } else {
@@ -160,6 +165,7 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
       onPressMove: (e) =>
         handleDragMove(e.clientX, e.clientY, e.target as HTMLImageElement),
       onRelease: () => handleDragRelease(),
+      name: "largeImageSlider",
     },
     [handleDragStart, handleDragMove, handleDragRelease]
   );
@@ -215,6 +221,9 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
               <div
                 className="relative w-1/3 h-full flex justify-center items-center"
                 key={item.id}
+                style={{
+                  opacity: mediaTransitionState?.isTransitioning ? "0" : "1",
+                }}
               >
                 {item.type === LARGE_IMAGE_SLIDER_ITEM_TYPE.IMAGE ? (
                   <NoSSRImage
@@ -233,6 +242,7 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
                     }}
                     draggable={false}
                     alt="Image"
+                    onLoad={() => setHasTargetPageLoaded!()}
                   />
                 ) : null}
               </div>
