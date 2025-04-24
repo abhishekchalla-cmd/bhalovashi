@@ -2,21 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type AppContextType = {
-  isEntered: boolean;
-  enter: () => void;
-};
+type AppContextType = {};
 
-export const AppContext = createContext<AppContextType>({
-  isEntered: false,
-  enter: () => {},
-});
+export const AppContext = createContext<AppContextType>({});
 
 export default function AppContextProvider(props: {
   children: React.ReactNode;
 }) {
   const { children } = props;
-  const [isEntered, setIsEntered] = useState(false);
 
   useEffect(() => {
     // Function to update the viewport height
@@ -39,15 +32,7 @@ export default function AppContextProvider(props: {
     };
   }, []);
 
-  const enter = async () => {
-    setIsEntered(true);
-  };
-
-  return (
-    <AppContext.Provider value={{ isEntered, enter }}>
-      {children}
-    </AppContext.Provider>
-  );
+  return <AppContext.Provider value={{}}>{children}</AppContext.Provider>;
 }
 
 export function useAppContext() {

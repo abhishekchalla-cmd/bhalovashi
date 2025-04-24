@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@/assets/css/globals.css";
 import { alteDIN } from "@/fonts";
 import AppContextProvider from "@/contexts/AppContext";
+import PhotoDragTransitionContextProvider from "@/contexts/PhotoDragTransitionContext";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -11,22 +12,24 @@ export const metadata: Metadata = {
 export default function RootLayout({ Component, pageProps }: any) {
   return (
     <AppContextProvider>
-      <html lang="en">
-        <body
-          className={`${alteDIN.variable} antialiased`}
-          style={{
-            touchAction: "none",
-            userSelect: "none",
-            WebkitUserSelect: "none",
-          }}
-        >
-          <div
-            id="phantom-container"
-            className="space-x-8 h-20 h-18 h-40 h-28 hidden"
-          />
-          <Component {...pageProps} />
-        </body>
-      </html>
+      <PhotoDragTransitionContextProvider>
+        <html lang="en">
+          <body
+            className={`${alteDIN.variable} antialiased`}
+            style={{
+              touchAction: "none",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+            }}
+          >
+            <div
+              id="phantom-container"
+              className="space-x-8 h-20 h-18 h-40 h-28 hidden"
+            />
+            <Component {...pageProps} />
+          </body>
+        </html>
+      </PhotoDragTransitionContextProvider>
     </AppContextProvider>
   );
 }

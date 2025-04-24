@@ -18,7 +18,7 @@ export default function IPhoneCameraModeCarousel({
   initialIndex = 0,
   overlayClassName,
 }: IPhoneCameraModeCarouselProps) {
-  const carouselItemSpace = 8;
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState(0);
@@ -30,15 +30,15 @@ export default function IPhoneCameraModeCarousel({
   useEffect(() => {
     const elapsedWidth = carouselItems.current
       .filter((_, index) => index < selectedIndex)
-      .reduce(
-        (acc, item) => acc + item.offsetWidth + carouselItemSpace * 14 * 0.25,
-        0
-      );
+      .reduce((acc, item) => acc + item.offsetWidth, 0);
     const currentItemWidth = carouselItems.current.length
       ? carouselItems.current[selectedIndex].offsetWidth
       : 0;
 
-    const xResult = window.innerWidth / 2 - elapsedWidth - currentItemWidth / 2;
+    const xResult =
+      containerRef.current!.clientWidth / 2 -
+      elapsedWidth -
+      currentItemWidth / 2;
 
     if (isDragging) setCarouselXTranslate(xResult + currentX);
     else setCarouselXTranslate(xResult);
@@ -48,14 +48,15 @@ export default function IPhoneCameraModeCarousel({
     useState(0);
   useEffect(() => {
     if (isDragging) {
-      const carouselElapsedWidth = window.innerWidth / 2 - carouselXTranslate;
+      const carouselElapsedWidth =
+        containerRef.current!.clientWidth / 2 - carouselXTranslate;
       const result = carouselItems.current.reduce(
         (acc, cur, idx) => {
           const itemThreshold = cur.offsetWidth * 0.3 + acc.elapsedX;
           if (itemThreshold <= carouselElapsedWidth) {
             acc.index = idx;
           }
-          acc.elapsedX += cur.offsetWidth + carouselItemSpace * 14 * 0.25;
+          acc.elapsedX += cur.offsetWidth;
           return acc;
         },
         {
@@ -96,12 +97,13 @@ export default function IPhoneCameraModeCarousel({
   return (
     <div
       className={`relative w-full py-2 overflow-hidden`}
+      ref={containerRef}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       <div
-        className={`w-full flex space-x-${carouselItemSpace} ${isDragging ? "" : "transition-all duration-300"}`}
+        className={`w-full flex ${isDragging ? "" : "transition-all duration-300"}`}
         style={{
           transform: `translateX(${carouselXTranslate}px)`,
         }}
@@ -109,7 +111,7 @@ export default function IPhoneCameraModeCarousel({
         {items.map((item, index) => (
           <div
             key={index}
-            className={`${alteDIN.className} h-5 flex items-center justify-center uppercase text-center transition-all duration-300 cursor-pointer ${
+            className={`${alteDIN.className} h-5 flex px-3 items-center justify-center uppercase text-center transition-all duration-300 cursor-pointer ${
               index ===
               (isDragging ? carouselItemInCrossHairIndex : selectedIndex)
                 ? "text-yellow-300 font-medium"

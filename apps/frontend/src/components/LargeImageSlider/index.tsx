@@ -1,6 +1,8 @@
 import { NoSSRImage } from "@/utils/no-ssr-image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import usePressEventHandlers from "../IOSSlider/event-handlers";
+import { PhotoDragTransitionContext } from "@/contexts/PhotoDragTransitionContext";
+import { CoordsInstant } from "@/utils/event";
 
 export const LARGE_IMAGE_SLIDER_ITEM_TYPE = {
   IMAGE: "image",
@@ -30,8 +32,6 @@ export type LargeImageSliderProps = {
   onChange: (item: LargeImageSliderItem) => any;
 };
 
-type CoordsInstant = { x: number; y: number; timeStamp: number };
-
 type DragState = {
   isDragging: boolean;
   initialTrayX?: number;
@@ -51,6 +51,7 @@ const initialDragState: DragState = {
 
 export default function LargeImageSlider(props: LargeImageSliderProps) {
   const { previousItem, currentItem, nextItem, onChange } = props;
+  const { initMediaTransition } = useContext(PhotoDragTransitionContext);
 
   const yThreshold = 40,
     xThreshold = 30,
@@ -79,7 +80,7 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
   );
 
   const handleDragMove = useCallback(
-    (clientX: number, clientY: number) => {
+    (clientX: number, clientY: number, target: HTMLElement) => {
       const currentCoordInstant: CoordsInstant = {
         x: clientX,
         y: clientY,
@@ -90,7 +91,27 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
         yDiff = currentCoordInstant.y - dragState.initialCoords!.y;
       if (yDiff > yThreshold) {
         // Image should close
-        console.log("CLOSING IMAGE");
+        // const bcr = target.getBoundingClientRect();
+        // initMediaTransition!(
+        //   {
+        //     id: currentItem.id,
+        //     projectId: currentItem.data.projectId,
+        //     url: currentItem.file.src,
+        //     mediaDims: {
+        //       height: currentItem.file.height,
+        //       width: currentItem.file.width,
+        //     },
+        //   },
+        //   -1,
+        //   {
+        //     x: bcr.x,
+        //     y: bcr.y,
+        //     height: bcr.height,
+        //     width: bcr.width,
+        //     borderRadius: 0,
+        //   },
+        //   true
+        // );
       } else {
         if ((!previousItem && xDiff > 0) || (!nextItem && xDiff < 0)) {
         } else {
@@ -136,7 +157,8 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
   const { touchStartHandler, mouseDownHandler } = usePressEventHandlers(
     {
       onPress: (e) => handleDragStart(e.clientX, e.clientY),
-      onPressMove: (e) => handleDragMove(e.clientX, e.clientY),
+      onPressMove: (e) =>
+        handleDragMove(e.clientX, e.clientY, e.target as HTMLImageElement),
       onRelease: () => handleDragRelease(),
     },
     [handleDragStart, handleDragMove, handleDragRelease]

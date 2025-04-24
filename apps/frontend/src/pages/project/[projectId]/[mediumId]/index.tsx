@@ -6,6 +6,7 @@ import {
 import LargeImageSlider, {
   LARGE_IMAGE_SLIDER_ITEM_TYPE,
 } from "@/components/LargeImageSlider";
+import { galleryBottomBarHeight, galleryTopBarHeight } from "@/config";
 import { appData, useAppData } from "@/utils/app-data";
 import { getLargestMediaFormat, getMediaUrl } from "@/utils/media";
 import { NoSSRImage } from "@/utils/no-ssr-image";
@@ -26,11 +27,6 @@ export default function MediumPage({
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
-
-  // console.log(`Medium ID: ${medium.id}`);
-
-  const topBarHeight = 18;
-  const bottomBarHeight = 28;
 
   useEffect(() => {
     setMounted(true);
@@ -61,7 +57,7 @@ export default function MediumPage({
   return (
     <div className="w-screen h-[calc(var(--vh,1vh)*100)] bg-black flex flex-col">
       <div
-        className={`w-screen px-2 h-${topBarHeight} bg-black grid grid-cols-6 items-center`}
+        className={`w-screen px-2 h-${galleryTopBarHeight} bg-black grid grid-cols-6 items-center`}
       >
         <div className="flex justify-start">
           <Link href={`/project/${medium.project.id}`}>
@@ -87,7 +83,7 @@ export default function MediumPage({
       </div>
       <div
         style={{
-          height: `calc(100% - (${topBarHeight}rem + ${bottomBarHeight}rem) * 0.25)`,
+          height: `calc(100% - (${galleryTopBarHeight}rem + ${galleryBottomBarHeight}rem) * 0.25)`,
         }}
         className="w-screen flex justify-center items-center"
       >
@@ -108,7 +104,7 @@ export default function MediumPage({
       </div>
 
       <div
-        className={`h-${bottomBarHeight} flex flex-col w-full justify-between py-2`}
+        className={`h-${galleryBottomBarHeight} flex flex-col w-full justify-between py-2`}
       >
         <IOSSlider
           style={{ height: "30px" }}

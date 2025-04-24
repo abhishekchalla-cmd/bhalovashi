@@ -1,17 +1,20 @@
 import IPhoneCameraModeCarousel, {
   Item,
 } from "@/components/IPhoneCameraModeCarousel";
+import { PhotoDragTransitionContext } from "@/contexts/PhotoDragTransitionContext";
 import { appData, useAppData } from "@/utils/app-data";
-import { getMediaUrl } from "@/utils/media";
+import { getLargestMediaFormat, getMediaUrl } from "@/utils/media";
 import { Project } from "@bhalovashi/types/project";
+import _ from "lodash";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export default function ProjectPage(props: { project: Project }) {
   const { project } = props;
   const router = useRouter();
   const { projects, media } = useAppData();
+  const { initMediaTransition } = useContext(PhotoDragTransitionContext);
 
   const projectIndex = useMemo(
     () => projects.indexOf(projects.find((p) => p.id === project.id)!),
@@ -73,19 +76,29 @@ export default function ProjectPage(props: { project: Project }) {
         style={{
           height: `calc(100% - (0.25 * (${topBarHeight}rem + ${bottomBarHeight}rem))`,
         }}
-        className="bg-gray-400"
-      ></div>
+        className="relative bg-gray-400 flex items-center justify-center"
+      >
+        <div className="text-5xl font-bold text-gray-500 text-center px-6 uppercase">
+          Something interesting will happen here :)
+        </div>
+        <div className="w-[1px] h-full absolute left-1/3 bg-gray-500" />
+        <div className="w-[1px] h-full absolute left-2/3 bg-gray-500" />
+        <div className="w-full h-[1px] absolute top-1/3  bg-gray-500" />
+        <div className="w-full h-[1px] absolute top-2/3  bg-gray-500" />
+      </div>
 
-      <div className={`h-${bottomBarHeight} bg-black`}>
-        <div className="flex flex-col items-center">
+      <div
+        className={`h-${bottomBarHeight} bg-black w-full flex items-center justify-center`}
+      >
+        <div className="flex flex-col h-full justify-start pt-1 items-center w-full max-w-[600px] overflow-hidden">
           <IPhoneCameraModeCarousel
             items={carouselItems}
             onSelect={setSelectedProject}
             initialIndex={projectIndex}
-            overlayClassName="w-full max-w-[600px] mx-auto"
+            overlayClassName="w-full mx-auto"
           />
 
-          <div className="w-full grid grid-cols-3 gap-x-2 mt-4 px-3 items-center max-w-[600px]">
+          <div className="w-full grid grid-cols-3 gap-x-2 mt-4 px-3 items-center">
             <div>
               <Image
                 className="w-14 h-14 bg-gray-400 rounded-lg cursor-pointer"
@@ -94,7 +107,18 @@ export default function ProjectPage(props: { project: Project }) {
                 width={48}
                 height={48}
                 onClick={() =>
-                  router.push(`/project/${project.id}/${projectThumbnail.id}`)
+                  initMediaTransition!(
+                    {
+                      id: projectThumbnail.id,
+                      projectId: project.id,
+                      url: getLargestMediaFormat(projectThumbnail.media).url,
+                      mediaDims: _.pick(
+                        getLargestMediaFormat(projectThumbnail.media),
+                        ["height", "width"]
+                      ),
+                    },
+                    1
+                  )
                 }
               />
             </div>

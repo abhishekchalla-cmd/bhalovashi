@@ -19,3 +19,6 @@ export const config = {
 export const timeFormats = {
   shortDate: "D MMM Y, HH:mm a",
 };
+
+export const galleryTopBarHeight = 18;
+export const galleryBottomBarHeight = 28;

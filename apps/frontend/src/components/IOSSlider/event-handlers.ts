@@ -1,12 +1,13 @@
+import { isTouchDevice } from "@/utils/device";
 import React, { useCallback, useRef } from "react";
 
-type PressEventHandler = (e: {
+export type PressEventHandler = (e: {
   clientX: number;
   clientY: number;
   target: EventTarget | null;
 }) => any;
 
-type ReleaseEventHandler = (e: { target: EventTarget | null }) => any;
+export type ReleaseEventHandler = (e: { target: EventTarget | null }) => any;
 
 type UsePressEventHandlersProps = {
   onPress: PressEventHandler;
@@ -22,7 +23,18 @@ export default function usePressEventHandlers(
     [event: string]: ((e: TouchEvent) => any) | ((e: MouseEvent) => any);
   }>({});
 
-  const touchStartHandler = useCallback((e: React.TouchEvent) => {
+  /*
+
+
+
+
+  Event attachers
+
+
+
+
+  */
+  const attachTouchHandlers = useCallback(() => {
     /*
 
 
@@ -62,22 +74,9 @@ export default function usePressEventHandlers(
       "touchend",
       windowTouchEventListeners.current.touchEnd
     );
-
-    /*
-
-
-      Handling touch start event
-      
-
-      */
-    return onPress({
-      clientX: e.targetTouches[0].clientX,
-      clientY: e.targetTouches[0].clientY,
-      target: e.target,
-    });
   }, deps);
 
-  const mouseDownHandler = useCallback((e: React.MouseEvent) => {
+  const attachMouseHandlers = useCallback(() => {
     /*
 
 
@@ -115,14 +114,33 @@ export default function usePressEventHandlers(
       "mouseup",
       windowTouchEventListeners.current.mouseUp
     );
+  }, []);
 
-    /*
+  /*
 
 
-      Handling mousedown event
-      
 
-      */
+
+  Press handlers
+
+
+
+
+  */
+
+  const touchStartHandler = useCallback((e: React.TouchEvent) => {
+    attachTouchHandlers();
+
+    return onPress({
+      clientX: e.targetTouches[0].clientX,
+      clientY: e.targetTouches[0].clientY,
+      target: e.target,
+    });
+  }, deps);
+
+  const mouseDownHandler = useCallback((e: React.MouseEvent) => {
+    attachMouseHandlers();
+
     return onPress({
       clientX: e.clientX,
       clientY: e.clientY,
@@ -130,5 +148,21 @@ export default function usePressEventHandlers(
     });
   }, deps);
 
-  return { touchStartHandler, mouseDownHandler };
+  /*
+
+
+
+
+  Helpers
+
+
+
+
+  */
+  const attachPressHandlers = () => {
+    if (isTouchDevice()) attachTouchHandlers();
+    else attachMouseHandlers();
+  };
+
+  return { touchStartHandler, mouseDownHandler, attachPressHandlers };
 }

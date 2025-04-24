@@ -45,7 +45,7 @@ export const mediaFormatSchema = z.object({
   large: imageFormatSchema.optional(),
 });
 
-export type MediaFormatSchema = z.infer<typeof mediaFormatSchema>;
+export type MediaFormatSchema = z.infer<typeof mediaFormatSchema>["small"];
 
 // Schema for media
 export const mediaSchema = z.object({
