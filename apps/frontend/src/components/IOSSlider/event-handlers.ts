@@ -28,7 +28,7 @@ export default function usePressEventHandlers(
   deps: any[]
 ) {
   const windowTouchEventListeners = useRef<{
-    [event: string]: ((e: TouchEvent) => any) | ((e: MouseEvent) => any);
+    [event: string]: ((e: PointerEvent) => any) | ((e: MouseEvent) => any);
   }>({});
 
   /*
@@ -42,15 +42,15 @@ export default function usePressEventHandlers(
 
 
   */
-  const removeTouchHandlers = useCallback(() => {
+  const removePointerHandlers = useCallback(() => {
     const attachingContainer = attachingContainerRef?.current || window;
 
     attachingContainer.removeEventListener(
-      "touchmove",
+      "pointermove",
       windowTouchEventListeners.current.touchMove as any
     );
     attachingContainer.removeEventListener(
-      "touchend",
+      "pointerup",
       windowTouchEventListeners.current.touchEnd as any
     );
 
@@ -58,7 +58,7 @@ export default function usePressEventHandlers(
     delete windowTouchEventListeners.current.touchEnd;
   }, []);
 
-  const attachTouchHandlers = useCallback(() => {
+  const attachPointerHandlers = useCallback(() => {
     const attachingContainer = attachingContainerRef?.current || window;
 
     /*
@@ -68,103 +68,33 @@ export default function usePressEventHandlers(
 
 
       */
-    windowTouchEventListeners.current.touchMove = (e: TouchEvent) => {
+    windowTouchEventListeners.current.touchMove = (e: PointerEvent) => {
       onPressMove({
-        clientX: e.targetTouches[0].clientX,
-        clientY: e.targetTouches[0].clientY,
+        clientX: e.clientX,
+        clientY: e.clientY,
         target: e.target,
       });
     };
     attachingContainer.addEventListener(
-      "touchmove",
+      "pointermove",
       windowTouchEventListeners.current.touchMove as EventListener
     );
 
-    windowTouchEventListeners.current.touchEnd = (e: TouchEvent) => {
-      removeTouchHandlers();
+    windowTouchEventListeners.current.touchEnd = (e: PointerEvent) => {
+      removePointerHandlers();
 
       return onRelease({
         target: e.target,
       });
     };
     attachingContainer.addEventListener(
-      "touchend",
+      "pointerup",
       windowTouchEventListeners.current.touchEnd as EventListener
     );
   }, deps);
 
-  const removeMouseHandlers = useCallback(() => {
-    const attachingContainer = attachingContainerRef?.current || window;
-
-    attachingContainer.removeEventListener(
-      "mousemove",
-      windowTouchEventListeners.current.mouseMove as any
-    );
-    attachingContainer.removeEventListener(
-      "mouseup",
-      windowTouchEventListeners.current.mouseUp as any
-    );
-
-    delete windowTouchEventListeners.current.mouseMove;
-    delete windowTouchEventListeners.current.mouseUp;
-  }, []);
-
-  const attachMouseHandlers = useCallback(() => {
-    const attachingContainer = attachingContainerRef?.current || window;
-
-    /*
-
-
-      Setting post mouse down event handlers
-
-
-      */
-    windowTouchEventListeners.current.mouseMove = (e: MouseEvent) =>
-      onPressMove({
-        clientX: e.clientX,
-        clientY: e.clientY,
-        target: e.target,
-      });
-    attachingContainer.addEventListener(
-      "mousemove",
-      windowTouchEventListeners.current.mouseMove as EventListener
-    );
-
-    windowTouchEventListeners.current.mouseUp = (e: MouseEvent) => {
-      onRelease({ target: e.target });
-      removeMouseHandlers();
-    };
-
-    attachingContainer.addEventListener(
-      "mouseup",
-      windowTouchEventListeners.current.mouseUp as EventListener
-    );
-  }, deps);
-
-  /*
-
-
-
-
-  Press handlers
-
-
-
-
-  */
-
-  const touchStartHandler = useCallback((e: React.TouchEvent) => {
-    attachTouchHandlers();
-
-    return onPress({
-      clientX: e.targetTouches[0].clientX,
-      clientY: e.targetTouches[0].clientY,
-      target: e.target,
-    });
-  }, deps);
-
-  const mouseDownHandler = useCallback((e: React.MouseEvent) => {
-    attachMouseHandlers();
+  const pointerDownHandler = useCallback((e: React.PointerEvent) => {
+    attachPointerHandlers();
 
     return onPress({
       clientX: e.clientX,
@@ -185,17 +115,11 @@ export default function usePressEventHandlers(
 
   */
 
-  const attachPressHandlers = useCallback(() => {
-    if (isTouchDevice()) attachTouchHandlers();
-    else attachMouseHandlers();
-  }, [attachTouchHandlers, attachMouseHandlers]);
-
   useEffect(() => {
     return () => {
-      if (isTouchDevice()) removeTouchHandlers();
-      else removeMouseHandlers();
+      removePointerHandlers();
     };
   }, []);
 
-  return { touchStartHandler, mouseDownHandler, attachPressHandlers };
+  return { pointerDownHandler, attachPointerHandlers };
 }

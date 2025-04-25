@@ -124,7 +124,7 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
 
   */
 
-  const { touchStartHandler, mouseDownHandler } = usePressEventHandlers(
+  const { pointerDownHandler } = usePressEventHandlers(
     {
       onPress: (e) => {},
       onPressMove: (e) =>
@@ -143,8 +143,7 @@ export default function IOSSlider<ID = any>(props: IOSSliderProps<ID>) {
       className={`${className || ""}`}
       style={{ ...(style || {}), overflow: "hidden", userSelect: "none" }}
       ref={containerRef}
-      onTouchStart={touchStartHandler}
-      onMouseDown={mouseDownHandler}
+      onPointerDown={pointerDownHandler}
     >
       <div
         ref={trayRef}

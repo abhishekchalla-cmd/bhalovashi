@@ -164,7 +164,7 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
     setDragState({ ...dragState });
   }, [dragState, props]);
 
-  const { touchStartHandler, mouseDownHandler } = usePressEventHandlers(
+  const { pointerDownHandler } = usePressEventHandlers(
     {
       onPress: (e) => handleDragStart(e.clientX, e.clientY),
       onPressMove: (e) =>
@@ -217,8 +217,7 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
           left: x,
         }}
         className="flex items-center"
-        onTouchStart={dragState.holdX ? undefined : touchStartHandler}
-        onMouseDown={dragState.holdX ? undefined : mouseDownHandler}
+        onPointerDown={dragState.holdX ? undefined : pointerDownHandler}
       >
         {[previousItem, currentItem, nextItem].map((item, idx) => {
           if (item) {

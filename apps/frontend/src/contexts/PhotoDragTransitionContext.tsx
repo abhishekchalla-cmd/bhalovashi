@@ -6,7 +6,6 @@ import usePressEventHandlers, {
 } from "@/components/IOSSlider/event-handlers";
 import { galleryBottomBarHeight, galleryTopBarHeight } from "@/config";
 import { CoordsInstant } from "@/utils/event";
-import { getEventListeners } from "events";
 import { useRouter } from "next/router";
 import React, {
   createContext,
@@ -143,7 +142,7 @@ export default function PhotoDragTransitionContextProvider(props: {
     });
   }, [mediaTransitionState]);
 
-  const { attachPressHandlers } = usePressEventHandlers(
+  const { attachPointerHandlers } = usePressEventHandlers(
     {
       onPress: () => {},
       onPressMove: handleDrag,
@@ -191,10 +190,10 @@ export default function PhotoDragTransitionContextProvider(props: {
       setMediaTransitionState(newMediaTransitionState);
       if (isDragging) {
         router.push(`/project/${media.projectId}`);
-        attachPressHandlers();
+        attachPointerHandlers();
       }
     },
-    [attachPressHandlers]
+    [attachPointerHandlers]
   );
 
   useEffect(() => {
