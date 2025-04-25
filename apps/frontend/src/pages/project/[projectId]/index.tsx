@@ -182,7 +182,7 @@ export async function getStaticPaths() {
   const projects = appData.data.projects;
   const pathsConfig = {
     paths: projects.map((p) => ({ params: { projectId: p.id + "" } })),
-    fallback: "blocking",
+    fallback: false,
   };
   return pathsConfig;
 }

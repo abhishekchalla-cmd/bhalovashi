@@ -60,9 +60,9 @@ export default function MediumPage({
       <Head>
         <title>Bhalovashi's Works - {medium.title}</title>
       </Head>
-      <div className="w-screen h-[calc(var(--vh,1vh)*100)] bg-black flex flex-col">
+      <div className="w-screen h-[calc(var(--vh,1vh)*100)] bg-black flex flex-col items-center">
         <div
-          className={`w-screen px-2 h-${galleryTopBarHeight} bg-black grid grid-cols-6 items-center`}
+          className={`w-screen max-w-[600px] px-2 h-${galleryTopBarHeight} bg-black grid grid-cols-6 items-center`}
         >
           <div className="flex justify-start">
             <Link href={`/project/${medium.project.id}`}>
@@ -114,7 +114,7 @@ export default function MediumPage({
         </div>
 
         <div
-          className={`h-${galleryBottomBarHeight} flex flex-col w-full justify-between py-2`}
+          className={`h-${galleryBottomBarHeight} flex flex-col w-full justify-between py-2 max-w-[600px]`}
         >
           <IOSSlider
             style={{ height: "30px" }}
@@ -154,7 +154,7 @@ export default function MediumPage({
             }}
           />
           <div
-            className={`w-screen bg-black grid grid-cols-6 items-center px-2`}
+            className={`w-screen bg-black grid grid-cols-6 items-center px-2 max-w-[600px]`}
           >
             <div className="flex justify-start">
               <button className="flex items-center justify-center bg-gray-800 h-11 w-11 rounded-full">
@@ -256,7 +256,7 @@ export async function getStaticPaths() {
     paths: media.map((p) => ({
       params: { mediumId: p.id + "", projectId: p.project.id + "" },
     })),
-    fallback: "blocking",
+    fallback: false,
   };
   return pathsConfig;
 }

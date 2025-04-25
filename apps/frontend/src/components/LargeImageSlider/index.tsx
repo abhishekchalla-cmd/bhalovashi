@@ -238,8 +238,10 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
                     height={item.file.height}
                     width={item.file.width}
                     style={{
-                      maxHeight: "100%",
-                      maxWidth: "100%",
+                      height:
+                        item.file.height > item.file.width ? "100%" : "auto",
+                      width:
+                        item.file.width > item.file.height ? "100%" : "auto",
                       userSelect: "none",
                       transition: "0.2s",
                       transform:

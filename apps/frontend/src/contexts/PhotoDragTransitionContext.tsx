@@ -301,7 +301,7 @@ export default function PhotoDragTransitionContextProvider(props: {
           </div>
           <img
             src={mediaTransitionState.src}
-            className="min-h-full min-w-full absolute h-full w-full top-0 left-0 z-4"
+            className="absolute h-full w-full top-0 left-0 z-4"
             style={{ filter: "blur(10px)" }}
           />
         </div>
@@ -338,7 +338,7 @@ const getMediaInCameraState = (): RectData => {
     height = 56,
     width = 56,
     y = window.innerHeight - bottom - height,
-    x = 12;
+    x = (window.innerWidth <= 600 ? 0 : (window.innerWidth - 600) / 2) + 12;
   return {
     width,
     height,
@@ -371,7 +371,7 @@ const getMediaInGalleryState = (mediaDims: MediaDims): RectData => {
   // );
 
   return {
-    x: 0,
+    x: (window.innerWidth - mediaWidth) / 2,
     y: finalY,
     width: mediaWidth,
     height: mediaHeight,
