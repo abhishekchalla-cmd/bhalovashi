@@ -267,7 +267,7 @@ const searchDivInCrossHair = (
   chX: number,
   maybeDivInCrossHair: HTMLDivElement,
   dir: number
-) => {
+): HTMLDivElement => {
   const start = maybeDivInCrossHair.getBoundingClientRect().x,
     end = start + maybeDivInCrossHair.clientWidth;
   if (start <= chX && end >= chX) return maybeDivInCrossHair;

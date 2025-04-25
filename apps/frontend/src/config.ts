@@ -1,13 +1,13 @@
 const isDev = process.env.NEXT_PUBLIC_ENV === "development";
 const url = typeof window !== "undefined" && window.location.href;
-const mobileDomain = isDev && url && url.split("http://")[1].split(":")[0];
+const mobileDomain = isDev && url && url.split("http://")[1]?.split(":")[0];
 const isDomainOnMobile = mobileDomain && /192\.168\..+/.test(mobileDomain);
-const backendHostFromMobile =
-  isDomainOnMobile &&
-  url
-    .split(":")
-    .map((_, idx) => (idx !== 2 ? _ : process.env.NEXT_PUBLIC_API_PORT))
-    .join(":");
+const backendHostFromMobile = isDomainOnMobile
+  ? url
+      .split(":")
+      .map((_, idx) => (idx !== 2 ? _ : process.env.NEXT_PUBLIC_API_PORT))
+      .join(":")
+  : undefined;
 
 export const config = {
   backendHost:
