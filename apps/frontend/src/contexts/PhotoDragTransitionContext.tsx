@@ -5,6 +5,7 @@ import usePressEventHandlers, {
   ReleaseEventHandler,
 } from "@/components/IOSSlider/event-handlers";
 import { galleryBottomBarHeight, galleryTopBarHeight } from "@/config";
+import { useAppData } from "@/utils/app-data";
 import { CoordsInstant } from "@/utils/event";
 import { useRouter } from "next/router";
 import React, {
@@ -83,6 +84,7 @@ export default function PhotoDragTransitionContextProvider(props: {
   const transitionEndTimeInMS = 250;
   const { children } = props;
   const router = useRouter();
+  const { thumbnailDataURLs } = useAppData();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -178,7 +180,7 @@ export default function PhotoDragTransitionContextProvider(props: {
       const newMediaTransitionState = {
         isTransitioning: true,
         isAnimating: false,
-        src: media.url,
+        src: thumbnailDataURLs[media.id],
         initialRectState,
         currentRectState: initialRectState,
         finalRectState,
@@ -300,6 +302,7 @@ export default function PhotoDragTransitionContextProvider(props: {
           <img
             src={mediaTransitionState.src}
             className="min-h-full min-w-full absolute h-full w-full top-0 left-0 z-4"
+            style={{ filter: "blur(10px)" }}
           />
         </div>
 

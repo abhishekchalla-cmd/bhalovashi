@@ -23,7 +23,7 @@ export default function MediumPage({
   medium: Media;
   index: number;
 }) {
-  const { media } = useAppData();
+  const { media, thumbnailDataURLs } = useAppData();
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
@@ -130,6 +130,7 @@ export default function MediumPage({
                   alt={item.id + ""}
                   height={30}
                   width={mediaWidth}
+                  blurDataURL={thumbnailDataURLs[item.id + ""]}
                 />
               </div>
             );

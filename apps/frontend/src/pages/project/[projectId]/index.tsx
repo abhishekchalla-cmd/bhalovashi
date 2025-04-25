@@ -16,7 +16,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 export default function ProjectPage(props: { project: Project }) {
   const { project } = props;
   const router = useRouter();
-  const { projects, media } = useAppData();
+  const { projects, media, thumbnailDataURLs } = useAppData();
   const { initMediaTransition, setHasTargetPageLoaded } = useContext(
     PhotoDragTransitionContext
   );
@@ -38,7 +38,10 @@ export default function ProjectPage(props: { project: Project }) {
   const bottomBarHeight = 40;
 
   const projectThumbnail = useMemo(
-    () => media.find((m) => m.id === project.thumbnail_media.id)!,
+    () => ({
+      ...media.find((m) => m.id === project.thumbnail_media.id)!,
+      dataURL: thumbnailDataURLs[project.thumbnail_media.id + ""],
+    }),
     [project]
   );
 
@@ -108,7 +111,7 @@ export default function ProjectPage(props: { project: Project }) {
             <div>
               <Image
                 className="w-14 h-14 bg-gray-400 rounded-lg cursor-pointer"
-                src={getMediaUrl(projectThumbnail.media.formats.small.url)}
+                src={projectThumbnail.dataURL}
                 alt="Project Thumbnail"
                 width={48}
                 height={48}
@@ -117,13 +120,11 @@ export default function ProjectPage(props: { project: Project }) {
                     {
                       id: projectThumbnail.id,
                       projectId: project.id,
-                      url: getMediaUrl(
-                        projectThumbnail.media.formats.small.url
+                      url: projectThumbnail.dataURL,
+                      mediaDims: _.pick(
+                        projectThumbnail.media.formats.thumbnail,
+                        ["height", "width"]
                       ),
-                      mediaDims: _.pick(projectThumbnail.media.formats.small, [
-                        "height",
-                        "width",
-                      ]),
                     },
                     1
                   )

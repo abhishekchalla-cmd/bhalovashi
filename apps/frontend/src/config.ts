@@ -1,7 +1,7 @@
 const isDev = process.env.NEXT_PUBLIC_ENV === "development";
 const url = typeof window !== "undefined" && window.location.href;
-const domain = isDev && url && url.split("http://")[1].split(":")[0];
-const isDomainOnMobile = domain && /192\.168\..+/.test(domain);
+const mobileDomain = isDev && url && url.split("http://")[1].split(":")[0];
+const isDomainOnMobile = mobileDomain && /192\.168\..+/.test(mobileDomain);
 const backendHostFromMobile =
   isDomainOnMobile &&
   url

@@ -4,7 +4,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "noEmit": false,
-    "outDir": "dist"
-  },
-  "include": ["src/pre-build.ts"]
+    "outDir": "dist",
+    "rootDir": "."
+  }
 }

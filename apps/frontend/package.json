@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "pre-build": "ts-node --project prebuild.tsconfig.json pre-build.ts",
+    "pre-build": "ts-node -r tsconfig-paths/register --project prebuild.tsconfig.json pre-build.ts",
     "dev": "yarn pre-build && next dev --turbopack",
     "build": "yarn pre-build && next build",
     "start": "yarn pre-build && next start",
@@ -15,6 +15,7 @@
     "@bhalovashi/utils": "*",
     "@types/lodash": "^4.17.16",
     "@types/moment": "^2.13.0",
+    "@types/sharp": "0.30.5",
     "dotenv": "^16.5.0",
     "global": "^4.4.0",
     "lodash": "^4.17.21",
@@ -23,6 +24,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sharp": "0.30.7",
+    "tsconfig-paths": "^4.2.0",
     "zod": "^3.24.3"
   },
   "devDependencies": {

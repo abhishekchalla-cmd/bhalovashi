@@ -6,6 +6,7 @@ import {
   PhotoDragTransitionContext,
 } from "@/contexts/PhotoDragTransitionContext";
 import { CoordsInstant } from "@/utils/event";
+import { useAppData } from "@/utils/app-data";
 
 export const LARGE_IMAGE_SLIDER_ITEM_TYPE = {
   IMAGE: "image",
@@ -55,6 +56,8 @@ const initialDragState: DragState = {
 
 export default function LargeImageSlider(props: LargeImageSliderProps) {
   const { previousItem, currentItem, nextItem, onChange } = props;
+
+  const { thumbnailDataURLs } = useAppData();
   const { mediaTransitionState, initMediaTransition, setHasTargetPageLoaded } =
     useContext(PhotoDragTransitionContext);
 
@@ -246,6 +249,7 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
                     }}
                     draggable={false}
                     alt="Image"
+                    blurDataURL={thumbnailDataURLs[currentItem.id + ""]}
                     onLoad={() =>
                       setHasTargetPageLoaded!(PHOTO_DRAG_PAGE.GALLERY)
                     }
