@@ -43,7 +43,6 @@ export default function usePressEventHandlers(
 
   */
   const removeTouchHandlers = useCallback(() => {
-    console.log(name, "Removing touch handlers");
     const attachingContainer = attachingContainerRef?.current || window;
 
     attachingContainer.removeEventListener(
@@ -60,8 +59,6 @@ export default function usePressEventHandlers(
   }, []);
 
   const attachTouchHandlers = useCallback(() => {
-    console.log(name, "Attaching touch listeners");
-
     const attachingContainer = attachingContainerRef?.current || window;
 
     /*
@@ -72,7 +69,6 @@ export default function usePressEventHandlers(
 
       */
     windowTouchEventListeners.current.touchMove = (e: TouchEvent) => {
-      console.log(name, "touch moving");
       onPressMove({
         clientX: e.targetTouches[0].clientX,
         clientY: e.targetTouches[0].clientY,
@@ -85,7 +81,6 @@ export default function usePressEventHandlers(
     );
 
     windowTouchEventListeners.current.touchEnd = (e: TouchEvent) => {
-      console.log(name, "Released");
       removeTouchHandlers();
 
       return onRelease({
@@ -136,9 +131,8 @@ export default function usePressEventHandlers(
     );
 
     windowTouchEventListeners.current.mouseUp = (e: MouseEvent) => {
+      onRelease({ target: e.target });
       removeMouseHandlers();
-
-      return onRelease({ target: e.target });
     };
 
     attachingContainer.addEventListener(
@@ -192,14 +186,12 @@ export default function usePressEventHandlers(
   */
 
   const attachPressHandlers = useCallback(() => {
-    console.log(name, "attaching press handlers");
     if (isTouchDevice()) attachTouchHandlers();
     else attachMouseHandlers();
   }, [attachTouchHandlers, attachMouseHandlers]);
 
   useEffect(() => {
     return () => {
-      console.log(name, "removing press handlers");
       if (isTouchDevice()) removeTouchHandlers();
       else removeMouseHandlers();
     };

@@ -24,6 +24,14 @@ type MediaFormat = {
   mediaDims: MediaDims;
 };
 
+export const PHOTO_DRAG_PAGE = {
+  PROJECT: "project",
+  GALLERY: "galley",
+} as const;
+
+export type PhotoDragPage =
+  (typeof PHOTO_DRAG_PAGE)[keyof typeof PHOTO_DRAG_PAGE];
+
 type PhotoDragTransitionContextType = {
   initMediaTransition?: (
     mediaFormat: MediaFormat,
@@ -31,7 +39,7 @@ type PhotoDragTransitionContextType = {
     initialRectData?: RectData,
     isDragging?: boolean
   ) => void;
-  setHasTargetPageLoaded?: () => void;
+  setHasTargetPageLoaded?: (page: PhotoDragPage) => void;
   mediaTransitionState?: MediaTransitionState;
 };
 
@@ -51,11 +59,6 @@ type RectData = {
   borderRadius: number;
 };
 
-type MediaData = {
-  src: string;
-  rect: RectData;
-};
-
 type MediaTransitionState = {
   isTransitioning: boolean;
   isAnimating: boolean;
@@ -72,6 +75,7 @@ type MediaTransitionState = {
     currentCoords: CoordsInstant;
   };
   hasTargetPageLoaded?: boolean;
+  targetPage?: PhotoDragPage;
 };
 
 export default function PhotoDragTransitionContextProvider(props: {
@@ -114,24 +118,24 @@ export default function PhotoDragTransitionContextProvider(props: {
   );
 
   const handleRelease = useCallback<ReleaseEventHandler>(() => {
-    const dir = Math.sign(
-      mediaTransitionState.dragState!.currentCoords.y -
-        mediaTransitionState.dragState!.initialCoords.y
-    );
     setMediaTransitionState((v) => {
+      const dir = v.dragState?.currentCoords
+        ? Math.sign(v.dragState.initialCoords.y - v.dragState.currentCoords.y)
+        : v.dir;
+
       const newState = {
         ...v,
         dir,
-        currentRectState: {
-          ...v.currentRectState!,
-          x: v.dragState!.currentCoords.x,
-          y: v.dragState!.currentCoords.y,
-        },
+        currentRectState: v.dragState?.currentCoords
+          ? {
+              ...v.currentRectState!,
+              x: v.dragState!.currentCoords.x,
+              y: v.dragState!.currentCoords.y,
+            }
+          : v.currentRectState,
         finalRectState:
           dir === 1
-            ? getMediaInGalleryState(
-                mediaTransitionState.mediaFormat!.mediaDims
-              )
+            ? getMediaInGalleryState(v.mediaFormat!.mediaDims)
             : getMediaInCameraState(),
         isDragging: false,
       };
@@ -143,8 +147,7 @@ export default function PhotoDragTransitionContextProvider(props: {
     {
       onPress: () => {},
       onPressMove: handleDrag,
-      onRelease: () => handleRelease,
-      attachingContainerRef: containerRef,
+      onRelease: handleRelease,
       name: "photoDrag",
     },
     [handleDrag, handleRelease]
@@ -202,7 +205,6 @@ export default function PhotoDragTransitionContextProvider(props: {
       mediaFormat: media,
       dir,
       isAnimating,
-      hasTargetPageLoaded,
     } = mediaTransitionState;
 
     if (isTransitioning && !isDragging) {
@@ -219,23 +221,42 @@ export default function PhotoDragTransitionContextProvider(props: {
           } else {
             router.push(`/project/${media!.projectId}`);
           }
+
+          handleAnimationEnd();
         }, transitionEndTimeInMS);
-      } else if (isAnimating && hasTargetPageLoaded) {
-        setMediaTransitionState((v) => ({
-          isTransitioning: false,
-          isAnimating: false,
-          isDragging: false,
-        }));
       }
     }
   }, [mediaTransitionState]);
+
+  const handleAnimationEnd = useCallback(() => {
+    setMediaTransitionState((v) => {
+      if (
+        v.hasTargetPageLoaded &&
+        v.targetPage ===
+          (v.dir === 1 ? PHOTO_DRAG_PAGE.GALLERY : PHOTO_DRAG_PAGE.PROJECT)
+      ) {
+        return {
+          isTransitioning: false,
+          isAnimating: false,
+          isDragging: false,
+        };
+      } else {
+        setTimeout(handleAnimationEnd, 50);
+        return v;
+      }
+    });
+  }, []);
 
   return (
     <PhotoDragTransitionContext.Provider
       value={{
         initMediaTransition,
-        setHasTargetPageLoaded: () =>
-          setMediaTransitionState((v) => ({ ...v, hasTargetPageLoaded: true })),
+        setHasTargetPageLoaded: (page) =>
+          setMediaTransitionState((v) => ({
+            ...v,
+            hasTargetPageLoaded: true,
+            targetPage: page,
+          })),
         mediaTransitionState,
       }}
     >

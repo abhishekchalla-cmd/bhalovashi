@@ -1,7 +1,10 @@
 import { NoSSRImage } from "@/utils/no-ssr-image";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import usePressEventHandlers from "../IOSSlider/event-handlers";
-import { PhotoDragTransitionContext } from "@/contexts/PhotoDragTransitionContext";
+import {
+  PHOTO_DRAG_PAGE,
+  PhotoDragTransitionContext,
+} from "@/contexts/PhotoDragTransitionContext";
 import { CoordsInstant } from "@/utils/event";
 
 export const LARGE_IMAGE_SLIDER_ITEM_TYPE = {
@@ -133,6 +136,8 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
   );
 
   const handleDragRelease = useCallback(() => {
+    if (dragState.pullingDown) return;
+
     dragState.isDragging = false;
 
     const totalXDiff = dragState.currentCoords!.x - dragState.initialCoords!.x,
@@ -242,7 +247,9 @@ export default function LargeImageSlider(props: LargeImageSliderProps) {
                     }}
                     draggable={false}
                     alt="Image"
-                    onLoad={() => setHasTargetPageLoaded!()}
+                    onLoad={() =>
+                      setHasTargetPageLoaded!(PHOTO_DRAG_PAGE.GALLERY)
+                    }
                   />
                 ) : null}
               </div>

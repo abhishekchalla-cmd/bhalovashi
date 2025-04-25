@@ -1,7 +1,10 @@
 import IPhoneCameraModeCarousel, {
   Item,
 } from "@/components/IPhoneCameraModeCarousel";
-import { PhotoDragTransitionContext } from "@/contexts/PhotoDragTransitionContext";
+import {
+  PHOTO_DRAG_PAGE,
+  PhotoDragTransitionContext,
+} from "@/contexts/PhotoDragTransitionContext";
 import { appData, useAppData } from "@/utils/app-data";
 import { getLargestMediaFormat, getMediaUrl } from "@/utils/media";
 import { Project } from "@bhalovashi/types/project";
@@ -42,7 +45,7 @@ export default function ProjectPage(props: { project: Project }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
-    setHasTargetPageLoaded!();
+    setHasTargetPageLoaded!(PHOTO_DRAG_PAGE.PROJECT);
   }, []);
 
   return (
